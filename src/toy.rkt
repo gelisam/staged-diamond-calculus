@@ -422,10 +422,11 @@
 (check-equal? (inferM (let-funM "add" "x" (λM "y"
                                             (case-natM (varM "x")
                                               (varM "y")
-                                              "x-1" (appM
-                                                      (appM (varM "add")
-                                                        (varM "x-1"))
-                                                      (varM "y"))))
+                                              "x-1" (appM (succM)
+                                                      (appM
+                                                        (appM (varM "add")
+                                                          (varM "x-1"))
+                                                        (varM "y")))))
                         (appM
                           (appM (varM "add")
                             (appM (succM) (appM (succM) (zeroM))))
@@ -451,10 +452,11 @@
 (check-equal? (inferU (let-funU "add" "x" (λU "y"
                                             (case-natU (varU "x")
                                               (varU "y")
-                                              "x-1" (appU
-                                                      (appU (varU "add")
-                                                        (varU "x-1"))
-                                                      (varU "y"))))
+                                              "x-1" (appU (succU)
+                                                      (appU
+                                                        (appU (varU "add")
+                                                          (varU "x-1"))
+                                                        (varU "y")))))
                         (appU
                           (appU (varU "add")
                             (appU (succU) (appU (succU) (zeroU))))
@@ -471,10 +473,11 @@
 (check-equal? (inferU (let-funU "add" "x" (λU "y"
                                             (case-natU (varU "x")
                                               (varU "y")
-                                              "x-1" (appU
-                                                      (appU (varU "add")
-                                                        (varU "x-1"))
-                                                      (varU "y"))))
+                                              "x-1" (appU (succU)
+                                                      (appU
+                                                        (appU (varU "add")
+                                                          (varU "x-1"))
+                                                        (varU "y")))))
                         (let-funU "mul" "x" (λU "y"
                                               (case-natU (varU "x")
                                                 (zeroU)
@@ -502,15 +505,15 @@
                                                       (case-natM (varM "n")
                                                         (quoteM (appU (succU) (zeroU)))
                                                         "n-1" (appM (varM "go") (varM "n-1"))))))))
-                            (let-funU "double" "x" (appU
+                            (let-funU "square" "x" (appU
                                                      (spliceU (appM (varM "power")
                                                                 (appM (succM)
                                                                   (appM (succM)
                                                                     (zeroM)))))
                                                      (varU "x"))
-                              (appU (varU "double")
-                                (appU (varU "double")
-                                  (appU (varU "double")
+                              (appU (varU "square")
+                                (appU (varU "square")
+                                  (appU (succU)
                                     (appU (succU) (zeroU))))))))))
               (NatZ))
 
@@ -608,12 +611,439 @@
 (check-equal? (inferE (let-funE "add" "x" (λE "y"
                                             (case-natE (varE "x")
                                               (varE "y")
-                                              "x-1" (appE
-                                                      (appE (varE "add")
-                                                        (varE "x-1"))
-                                                      (varE "y"))))
+                                              "x-1" (appE (succE)
+                                                      (appE
+                                                        (appE (varE "add")
+                                                          (varE "x-1"))
+                                                        (varE "y")))))
                         (appE
                           (appE (varE "add")
                             (appE (succE) (appE (succE) (zeroE))))
                           (appE (succE) (appE (succE) (zeroE))))))
               (NatZ))
+
+
+; big-steps semantics for Macro-level phase 1 terms. note that
+;
+;   Δ; {Γ̅} ⊢ eU => eE
+;
+; is expansion, not evaluation, and that Γ̅ maps variables to Expanded phase 0
+; terms, not to phase 0 values.
+;
+; xM ↦ vM ∈ Δ
+; ------
+; {Δ}; Γ̅ ⊢ xM => vM
+;
+; ------
+; {Δ}; Γ̅ ⊢ \xM. bodyM => clo Δ Γ̅ xM bodyM
+;
+; {Δ}; Γ̅ ⊢ funM => clo clo-Δ clo-Γ xM bodyM
+; {Δ}; Γ̅ ⊢ argM => inM
+; {clo-Δ, xM ↦ inM}; clo-Γ ⊢ bodyM => outM
+; ------
+; {Δ}; Γ̅ ⊢ funM arg2M => outM
+;
+; ext-Δ@{Δ, funM ↦ clo ext-Δ Γ̅ xM defM}; Γ̅ ⊢ bodyM => vM
+; ------
+; {Δ}; Γ̅ ⊢ let-fun funM xM = defM in bodyM => vM
+;
+; ------
+; {Δ}; Γ̅ ⊢ zero => zero
+;
+; ------
+; {Δ}; Γ̅ ⊢ succ => succ
+;
+; {Δ}; Γ̅ ⊢ funM => succ
+; {Δ}; Γ̅ ⊢ argM => nM
+; ------
+; {Δ}; Γ̅ ⊢ funM arg2M => succ nM
+;
+; {Δ}; Γ̅ ⊢ scrutM => zero
+; {Δ}; Γ̅ ⊢ zero-branchM => vM
+; ------
+; {Δ}; Γ̅ ⊢ case-nat scrutM of
+;            { zero -> zero-branchM
+;            ; succ succ-xM -> succ-branchM
+;            }
+;       => vM
+;
+; {Δ}; Γ̅ ⊢ scrutM => succ nM
+; {Δ, succ-xM ↦ nM}; Γ̅ ⊢ succ-branchM => vM
+; ------
+; {Δ}; Γ̅ ⊢ case-nat scrutM of
+;            { zero -> zero-branchM
+;            ; succ succ-xM -> succ-branchM
+;            }
+;       => vM
+;
+; Δ; {Γ̅} ⊢ lowerU => lowerE
+; ------
+; {Δ}; Γ̅ ⊢ 'lowerU => 'lowerE
+;
+; {Δ}; Γ̅ ⊢ defM => 'lowerE
+; {Δ}; Γ, xU ↦ lowerE ⊢ bodyM => vM
+; ------
+; {Δ}; Γ̅̅ ⊢ let-diaM xU = defM in body
+(struct clo-valM (delta gamma-bar xM bodyM) #:transparent)
+(struct succ-valM () #:transparent)
+(struct nat-valM (n) #:transparent)
+(struct quoted-valM (exprE) #:transparent)
+(define (evalM delta gamma-bar eeM)
+  (match eeM
+    [(varM xM)
+     ((hash-ref delta xM))]
+    [(λM xM bodyM)
+     (clo-valM delta gamma-bar xM bodyM)]
+    [(appM funM argM)
+     (match (evalM delta gamma-bar funM)
+       [(clo-valM clo-delta clo-gamma-bar xM bodyM)
+        (define inM (evalM delta gamma-bar argM))
+        (evalM (hash-set clo-delta xM (λ () inM)) clo-gamma-bar bodyM)]
+       [(succ-valM)
+        (match (evalM delta gamma-bar argM)
+          [(nat-valM inM)
+           (nat-valM (+ inM 1))])])]
+    [(let-funM funM xM defM bodyM)
+     (define (mk-fun)
+       (clo-valM (hash-set delta funM mk-fun) gamma-bar xM defM))
+     (evalM (hash-set delta funM mk-fun) gamma-bar bodyM)]
+    [(zeroM)
+     (nat-valM 0)]
+    [(succM)
+     (succ-valM)]
+    [(case-natM scrutM zero-branchM succ-xM succ-branchM)
+     (match (evalM delta gamma-bar scrutM)
+       [(nat-valM 0)
+        (evalM delta gamma-bar zero-branchM)]
+       [(nat-valM n)
+        (define x (nat-valM (- n 1)))
+        (evalM (hash-set delta succ-xM (λ () x)) gamma-bar succ-branchM)])]
+    [(quoteM lowerU)
+     (quoted-valM (expandU delta gamma-bar lowerU))]
+    [(let-diaM xU defM bodyM)
+     (match (evalM delta gamma-bar defM)
+       [(quoted-valM lowerE)
+        (evalM delta (hash-set gamma-bar xU lowerE) bodyM)])]))
+(define (eval-closedM eeM)
+  (evalM (hash) (hash) eeM))
+
+; big-steps semantics for expanding Unexpanded phase 0 terms
+;
+; xU ↦ eE ∈ Γ̅̅
+; ------
+; Δ; {Γ̅} ⊢ xU => eE
+;
+; Δ; {Γ̅, xU ↦ xE} ⊢ bodyU => bodyE
+; ------
+; Δ; {Γ̅} ⊢ \xU. bodyU => \xE. bodyE
+;
+; Δ; {Γ̅} ⊢ funU => funE
+; Δ; {Γ̅} ⊢ argU => argE
+; ------
+; Δ; {Γ̅} ⊢ funU argU => funE argE
+;
+; Δ; {Γ̅, funU ↦ funE, xU ↦ xE} ⊢ defU => defE
+; Δ; {Γ̅, funU ↦ funE} ⊢ bodyU => bodyE
+; ------
+; Δ; {Γ̅} ⊢ let-fun funU xU = defU in bodyU
+;       => let-fun funE xE = defE in bodyE
+;
+; ------
+; Δ; {Γ̅} ⊢ zeroU => zeroE
+;
+; ------
+; Δ; {Γ̅} ⊢ succU => succE
+;
+; Δ; {Γ̅} ⊢ scrutU => scrutE
+; Δ; {Γ̅} ⊢ zero-branchU => zero-branchE
+; Δ; {Γ̅, succ-xU ↦ succ-xE} ⊢ succ-branchU => succ-branchE
+; ------
+; Δ; {Γ̅} ⊢ case-natU scrutU of
+;            { zero -> zero-branchU
+;            ; succ succ-xU -> succ-branchU
+;            }
+;       => case-natE scrutE of
+;           { zero -> zero-branchE
+;           ; succ succ-xE -> succ-branchE
+;           }
+;
+; {Δ}; Γ̅ ⊢ higherM => 'lowerE
+; ------
+; Δ; {Γ̅} ⊢ $higherM => lowerE
+;
+; {Δ}; Γ̅ ⊢ defM => vM
+; Δ, xU ↦ vM; {Γ̅} ⊢ bodyU => bodyE
+; ------
+; Δ; {Γ̅} ⊢ let-macroM xU = defM in bodyU => bodyE
+(define (expandU delta gamma-bar eeU)
+  (match eeU
+    [(varU xU)
+     (hash-ref gamma-bar xU)]
+    [(λU xU bodyU)
+     (define bodyE (expandU delta (hash-set gamma-bar
+                                    xU (varE xU))
+                            bodyU))
+     (λE xU bodyE)]
+    [(appU funU argU)
+     (define funE (expandU delta gamma-bar funU))
+     (define argE (expandU delta gamma-bar argU))
+     (appE funE argE)]
+    [(let-funU funU xU defU bodyU)
+     (define defE (expandU delta (hash-set* gamma-bar
+                                   funU (varE funU)
+                                   xU (varE xU))
+                           defU))
+     (define bodyE (expandU delta (hash-set gamma-bar
+                                    funU (varE funU))
+                            bodyU))
+     (let-funE funU xU defE bodyE)]
+    [(zeroU)
+     (zeroE)]
+    [(succU)
+     (succE)]
+    [(case-natU scrutU zero-branchU succ-xU succ-branchU)
+     (define scrutE (expandU delta gamma-bar scrutU))
+     (define zero-branchE (expandU delta gamma-bar zero-branchU))
+     (define succ-branchE (expandU delta (hash-set gamma-bar
+                                           succ-xU (varE succ-xU))
+                                   succ-branchU))
+     (case-natE scrutE zero-branchE succ-xU succ-branchE)]
+    [(spliceU higherM)
+     (match (evalM delta gamma-bar higherM)
+       [(quoted-valM lowerE)
+        lowerE])]
+    [(let-macroU xU defM bodyU)
+     (define vM (evalM delta gamma-bar defM))
+     (expandU (hash-set delta xU (λ () vM)) gamma-bar
+              bodyU)]))
+(define (expand-closedU eeU)
+  (expandU (hash) (hash) eeU))
+; the usual basic examples, with evalM
+(check-equal? (eval-closedM (appM (succM) (zeroM)))
+              (nat-valM 1))
+; TODO: throw and catch runtime errors
+;(check-equal? (eval-closedM (appM (zeroM) (succM)))
+;              #f)
+(check-equal? (eval-closedM (let-funM "const-zero" "_" (zeroM)
+                              (appM (varM "const-zero") (succM))))
+              (nat-valM 0))
+(check-equal? (eval-closedM (let-funM "id" "x" (varM "x")
+                              (appM (varM "id") (zeroM))))
+              (nat-valM 0))
+(check-equal? (eval-closedM (let-funM "id" "x" (varM "x")
+                              (appM
+                                (appM (varM "id") (varM "id"))
+                                (zeroM))))
+              (nat-valM 0))
+(check-equal? (eval-closedM (let-funM "add" "x" (λM "y"
+                                                  (case-natM (varM "x")
+                                                    (varM "y")
+                                                    "x-1" (appM (succM)
+                                                            (appM
+                                                              (appM (varM "add")
+                                                                (varM "x-1"))
+                                                              (varM "y")))))
+                              (appM
+                                (appM (varM "add")
+                                  (appM (succM) (appM (succM) (zeroM))))
+                                (appM (succM) (appM (succM) (zeroM))))))
+              (nat-valM 4))
+; more interesting examples with let-diaM, quoteM, let-macroU, and spliceU:
+(check-equal? (eval-closedM (let-diaM "two" (quoteM (appU (succU)
+                                                    (appU (succU)
+                                                      (zeroU))))
+                              (quoteM (appU (succU)
+                                        (appU (succU)
+                                          (varU "two"))))))
+              (quoted-valM (appE (succE)
+                             (appE (succE)
+                               (appE (succE)
+                                 (appE (succE)
+                                   (zeroE)))))))
+(check-equal? (expand-closedU (let-funU "add" "x" (λU "y"
+                                                    (case-natU (varU "x")
+                                                      (varU "y")
+                                                      "x-1" (appU (succU)
+                                                              (appU
+                                                                (appU (varU "add")
+                                                                  (varU "x-1"))
+                                                                (varU "y")))))
+                              (let-funU "mul" "x" (λU "y"
+                                                    (case-natU (varU "x")
+                                                      (zeroU)
+                                                      "x-1" (appU
+                                                              (appU (varU "add")
+                                                                (varU "y"))
+                                                              (appU
+                                                                (appU (varU "mul")
+                                                                  (varU "x-1"))
+                                                                (varU "y")))))
+                                (let-macroU "power" (λM "n"
+                                                      (quoteM (λU "x"
+                                                        (spliceU
+                                                          (let-funM "go" "n-1"
+                                                                         (case-natM (varM "n-1")
+                                                                           (quoteM (varU "x"))
+                                                                           "n-2" (let-diaM "recur"
+                                                                                           (appM (varM "go")
+                                                                                                 (varM "n-2"))
+                                                                                   (quoteM
+                                                                                     (appU
+                                                                                       (appU (varU "mul")
+                                                                                         (varU "x"))
+                                                                                       (varU "recur")))))
+                                                            (case-natM (varM "n")
+                                                              (quoteM (appU (succU) (zeroU)))
+                                                              "n-1" (appM (varM "go") (varM "n-1"))))))))
+                                  (let-funU "square" "x" (appU
+                                                           (spliceU (appM (varM "power")
+                                                                      (appM (succM)
+                                                                        (appM (succM)
+                                                                          (zeroM)))))
+                                                           (varU "x"))
+                                    (appU (varU "square")
+                                      (appU (varU "square")
+                                        (appU (succU)
+                                          (appU (succU) (zeroU))))))))))
+              (let-funE "add" "x" (λE "y"
+                                    (case-natE (varE "x")
+                                      (varE "y")
+                                      "x-1" (appE (succE)
+                                              (appE
+                                                (appE (varE "add")
+                                                  (varE "x-1"))
+                                                (varE "y")))))
+                (let-funE "mul" "x" (λE "y"
+                                      (case-natE (varE "x")
+                                        (zeroE)
+                                        "x-1" (appE
+                                                (appE (varE "add")
+                                                  (varE "y"))
+                                                (appE
+                                                  (appE (varE "mul")
+                                                    (varE "x-1"))
+                                                  (varE "y")))))
+                  (let-funE "square" "x" (appE
+                                           (λE "x"
+                                             (appE
+                                               (appE (varE "mul")
+                                                 (varE "x"))
+                                               (varE "x")))
+                                           (varE "x"))
+                              (appE (varE "square")
+                                (appE (varE "square")
+                                  (appE (succE)
+                                    (appE (succE) (zeroE)))))))))
+
+; big steps semantics for Expanded phase 0 terms
+;
+; xE ↦ vE ∈ Γ
+; ------
+; Γ ⊢ xE => vE
+;
+; ------
+; Γ ⊢ \xE. bodyE => clo Γ xE bodyE
+;
+; Γ ⊢ funE => clo clo-Γ xE defE
+; Γ ⊢ argE => inE
+; clo-Γ, xE ↦ inE ⊢ bodyE => outE
+; ------
+; Γ ⊢ funE argE => outE
+;
+; ext-Γ@(Γ, funE ↦ clo ext-Γ xE defE); Γ ⊢ bodyE => vE
+; ------
+; Γ ⊢ let-fun funE xE = defE in bodyE => vE
+;
+; ------
+; Γ ⊢ zeroE => zero
+;
+; ------
+; Γ ⊢ succE => succ
+;
+; Γ ⊢ funE => succ
+; Γ ⊢ argE => nE
+; ------
+; Γ ⊢ funE argE => succ nE
+;
+; Γ ⊢ scrutE => zero
+; Γ ⊢ zero-branchE => vE
+; ------
+; Γ ⊢ case-nat scrutE of
+;       { zero -> zero-branchE
+;       ; succ succ-xE -> succ-branchE
+;       }
+;     => vE
+;
+; Γ ⊢ scrutE => succ nE
+; Γ, succ-xE ↦ nE ⊢ succ-branchE => vE
+; ------
+; Γ ⊢ case-nat scrutE of
+;       { zero -> zero-branchE
+;       ; succ succ-xE -> succ-branchE
+;       }
+;  => vE
+(struct clo-valE (gamma xE bodyE) #:transparent)
+(struct succ-valE () #:transparent)
+(struct nat-valE (nE) #:transparent)
+(define (evalE gamma eeE)
+  (match eeE
+    [(varE xE)
+     ((hash-ref gamma xE))]
+    [(λE xE bodyE)
+     (clo-valE gamma xE bodyE)]
+    [(appE funE argE)
+     (match (evalE gamma funE)
+       [(clo-valE clo-gamma xE bodyE)
+        (define inE (evalE gamma argE))
+        (evalE (hash-set clo-gamma xE (λ () inE)) bodyE)]
+       [(succ-valE)
+        (match (evalE gamma argE)
+          [(nat-valE nE)
+           (nat-valE (+ nE 1))])])]
+    [(let-funE funE xE defE bodyE)
+     (define (mk-fun)
+       (clo-valE (hash-set gamma funE mk-fun) xE defE))
+     (evalE (hash-set gamma funE mk-fun) bodyE)]
+    [(zeroE)
+     (nat-valE 0)]
+    [(succE)
+     (succ-valE)]
+    [(case-natE scrutE zero-branchE succ-xE succ-branchE)
+     (match (evalE gamma scrutE)
+       [(nat-valE 0)
+        (evalE gamma zero-branchE)]
+       [(nat-valE nE)
+        (define x (nat-valE (- nE 1)))
+        (evalE (hash-set gamma succ-xE (λ () x)) succ-branchE)])]))
+(define (eval-closedE eeE)
+  (evalE (hash) eeE))
+; the usual basic examples, with evalE
+(check-equal? (eval-closedE (appE (succE) (zeroE)))
+              (nat-valE 1))
+; TODO: throw and catch runtime errors
+;(check-equal? (eval-closedE (appE (zeroE) (succE)))
+;              #f)
+(check-equal? (eval-closedE (let-funE "const-zero" "_" (zeroE)
+                              (appE (varE "const-zero") (succE))))
+              (nat-valE 0))
+(check-equal? (eval-closedE (let-funE "id" "x" (varE "x")
+                              (appE (varE "id") (zeroE))))
+              (nat-valE 0))
+(check-equal? (eval-closedE (let-funE "id" "x" (varE "x")
+                              (appE
+                                (appE (varE "id") (varE "id"))
+                                (zeroE))))
+              (nat-valE 0))
+(check-equal? (eval-closedE (let-funE "add" "x" (λE "y"
+                                                  (case-natE (varE "x")
+                                                    (varE "y")
+                                                    "x-1" (appE (succE)
+                                                            (appE
+                                                              (appE (varE "add")
+                                                                (varE "x-1"))
+                                                              (varE "y")))))
+                              (appE
+                                (appE (varE "add")
+                                  (appE (succE) (appE (succE) (zeroE))))
+                                (appE (succE) (appE (succE) (zeroE))))))
+              (nat-valE 4))
