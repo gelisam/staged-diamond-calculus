@@ -33,12 +33,12 @@
 (struct mk-varM (xM) #:transparent)
 (struct mk-λM (xM bodyM) #:transparent)
 (struct mk-appM (funM argM) #:transparent)
-(struct mk-let-funM (funM xM defM bodyM) #:transparent)
+(struct mk-let-funM (funM maybe-tM xM defM bodyM) #:transparent)
 (struct mk-zeroM () #:transparent)
 (struct mk-succM () #:transparent)
 (struct mk-case-natM (scrutM zero-branchM succ-xM succ-branchM) #:transparent)
 (struct mk-quoteM (lowerU) #:transparent)
-(struct mk-let-diaM (xU defM bodyM) #:transparent)
+(struct mk-let-diaM (xU maybe-tM defM bodyM) #:transparent)
 
 ; *U*nexpanded phase 0 terms with phase 1 terms inside of them
 ; eU ::= xU | \xU. eU | eU eU
@@ -47,12 +47,12 @@
 (struct mk-varU (xU) #:transparent)
 (struct mk-λU (xU bodyU) #:transparent)
 (struct mk-appU (funU argU) #:transparent)
-(struct mk-let-funU (funU xU defU bodyU) #:transparent)
+(struct mk-let-funU (funU maybe-tZ xU defU bodyU) #:transparent)
 (struct mk-zeroU () #:transparent)
 (struct mk-succU () #:transparent)
 (struct mk-case-natU (scrutU zero-branchU succ-xU succ-branchU) #:transparent)
 (struct mk-spliceU (termM) #:transparent)
-(struct mk-let-macroU (xM defM bodyU) #:transparent)
+(struct mk-let-macroU (xM maybe-tM defM bodyU) #:transparent)
 
 ; *E*xpanded phase 0 terms, with no phase 1 terms
 ; eE ::= xE | \xE. eE | eE eE
@@ -60,7 +60,7 @@
 (struct mk-varE (xE) #:transparent)
 (struct mk-λE (xE bodyE) #:transparent)
 (struct mk-appE (funE argE) #:transparent)
-(struct mk-let-funE (funE xE defE bodyE) #:transparent)
+(struct mk-let-funE (funE maybe-tZ xE defE bodyE) #:transparent)
 (struct mk-zeroE () #:transparent)
 (struct mk-succE () #:transparent)
 (struct mk-case-natE (scrutE zero-branchE succ-xE succ-branchE) #:transparent)
@@ -120,7 +120,7 @@
 (define-syntax (let-funM stx)
   (syntax-case stx ()
     [(_ [(fun x y ...) def] body)
-     #'(mk-let-funM 'fun 'x
+     #'(mk-let-funM 'fun #f 'x
          (let ([fun (mk-varM 'fun)]
                [x (mk-varM 'x)])
            (λM (y ...) def))
@@ -128,12 +128,12 @@
            body))]))
 (check-equal? (let-funM [(f x) (appM f x)]
                 (appM f (mk-zeroM)))
-              (mk-let-funM 'f 'x
+              (mk-let-funM 'f #f 'x
                 (mk-appM (mk-varM 'f) (mk-varM 'x))
                 (mk-appM (mk-varM 'f) (mk-zeroM))))
 (check-equal? (let-funM [(f x y) (appM f x y)]
                 (appM f (mk-zeroM) (mk-zeroM)))
-              (mk-let-funM 'f 'x
+              (mk-let-funM 'f #f 'x
                 (mk-λM 'y (appM (mk-varM 'f) (mk-varM 'x) (mk-varM 'y)))
                 (appM (mk-varM 'f) (mk-zeroM) (mk-zeroM))))
 
@@ -199,7 +199,7 @@
 (define-syntax (let-funU stx)
   (syntax-case stx ()
     [(_ [(fun x y ...) def] body)
-     #'(mk-let-funU 'fun 'x
+     #'(mk-let-funU 'fun #f 'x
          (let ([fun (mk-varU 'fun)]
                [x (mk-varU 'x)])
            (λU (y ...) def))
@@ -207,12 +207,12 @@
            body))]))
 (check-equal? (let-funU [(f x) (appU f x)]
                 (appU f (mk-zeroU)))
-              (mk-let-funU 'f 'x
+              (mk-let-funU 'f #f 'x
                 (mk-appU (mk-varU 'f) (mk-varU 'x))
                 (mk-appU (mk-varU 'f) (mk-zeroU))))
 (check-equal? (let-funU [(f x y) (appU f x y)]
                 (appU f (mk-zeroU) (mk-zeroU)))
-              (mk-let-funU 'f 'x
+              (mk-let-funU 'f #f 'x
                 (mk-λU 'y (appU (mk-varU 'f) (mk-varU 'x) (mk-varU 'y)))
                 (appU (mk-varU 'f) (mk-zeroU) (mk-zeroU))))
 
@@ -278,7 +278,7 @@
 (define-syntax (let-funE stx)
   (syntax-case stx ()
     [(_ [(fun x y ...) def] body)
-     #'(mk-let-funE 'fun 'x
+     #'(mk-let-funE 'fun #f 'x
          (let ([fun (mk-varE 'fun)]
                [x (mk-varE 'x)])
            (λE (y ...) def))
@@ -286,12 +286,12 @@
            body))]))
 (check-equal? (let-funE [(f x) (appE f x)]
                 (appE f (mk-zeroE)))
-              (mk-let-funE 'f 'x
+              (mk-let-funE 'f #f 'x
                 (mk-appE (mk-varE 'f) (mk-varE 'x))
                 (mk-appE (mk-varE 'f) (mk-zeroE))))
 (check-equal? (let-funE [(f x y) (appE f x y)]
                 (appE f (mk-zeroE) (mk-zeroE)))
-              (mk-let-funE 'f 'x
+              (mk-let-funE 'f #f 'x
                 (mk-λE 'y (appE (mk-varE 'f) (mk-varE 'x) (mk-varE 'y)))
                 (appE (mk-varE 'f) (mk-zeroE) (mk-zeroE))))
 
@@ -322,17 +322,17 @@
 ; more interesting syntax sugar with let-diaM, quoteM, let-macroU, and spliceU
 
 (define-syntax-rule (let-diaM [x defM] bodyM)
-  (mk-let-diaM 'x defM
+  (mk-let-diaM 'x #f defM
     (let ([x (mk-varU 'x)])
       bodyM)))
 (define (quoteM bodyU) (mk-quoteM bodyU))
 (check-equal? (let-diaM [one (natU 1)]
                 (quoteM (appU one zeroU)))
-              (mk-let-diaM 'one (mk-appU (mk-succU) (mk-zeroU))
+              (mk-let-diaM 'one #f (mk-appU (mk-succU) (mk-zeroU))
                 (mk-quoteM (mk-appU (mk-varU 'one) (mk-zeroU)))))
 
 (define-syntax-rule (let-macroU1 [x defM] bodyU)
-  (mk-let-macroU 'x defM
+  (mk-let-macroU 'x #f defM
     (let ([x (mk-varM 'x)])
       bodyU)))
 (define-syntax (let-macroU stx)
@@ -344,11 +344,11 @@
 (define (spliceU termM) (mk-spliceU termM))
 (check-equal? (let-macroU [one (natM 1)]
                 (spliceU (appM (mk-varU 'f) one)))
-              (mk-let-macroU 'one (mk-appM (mk-succM) (mk-zeroM))
+              (mk-let-macroU 'one #f (mk-appM (mk-succM) (mk-zeroM))
                 (mk-spliceU (mk-appM (mk-varU 'f) (mk-varM 'one)))))
 (check-equal? (let-macroU [(f x) (appM succM x)]
                 (spliceU (appM f (quoteM (mk-varM 'one)))))
-              (mk-let-macroU 'f (mk-λM 'x (mk-appM (mk-succM) (mk-varM 'x)))
+              (mk-let-macroU 'f #f (mk-λM 'x (mk-appM (mk-succM) (mk-varM 'x)))
                 (mk-spliceU (mk-appM (mk-varM 'f) (mk-quoteM (mk-varM 'one))))))
 
 
@@ -567,10 +567,12 @@
      (and (checkM delta gamma funM (ArrowM in-tM out-tM))
           (checkM delta gamma argM in-tM)
           ttM)]
-    [(mk-let-funM funM xM defM bodyM)
+    [(mk-let-funM funM maybe-tM xM defM bodyM)
      (define in-tM (new-uf-set))
      (define out-tM (new-uf-set))
-     (and (checkM (hash-set* delta
+     (and (when maybe-tM
+            (unify maybe-tM (ArrowM in-tM out-tM)))
+          (checkM (hash-set* delta
                     funM (ArrowM in-tM out-tM)
                     xM in-tM)
                   gamma
@@ -593,9 +595,11 @@
      (define lower-tZ (new-uf-set))
      (and (checkU delta gamma lowerU lower-tZ)
           (unify ttM (DiaM lower-tZ)))]
-    [(mk-let-diaM xU defM bodyM)
+    [(mk-let-diaM xU maybe-tM defM bodyM)
      (define lower-tZ (new-uf-set))
-     (and (checkM delta gamma defM (DiaM lower-tZ))
+     (and (when maybe-tM
+            (unify maybe-tM (DiaM lower-tZ)))
+          (checkM delta gamma defM (DiaM lower-tZ))
           (checkM delta (hash-set gamma xU lower-tZ) bodyM ttM))]))
 (define (inferM eeM)
   (define ttM (new-uf-set))
@@ -661,10 +665,12 @@
      (and (checkU delta gamma funU (ArrowZ in-tZ out-tZ))
           (checkU delta gamma argU in-tZ)
           ttZ)]
-    [(mk-let-funU funU xU defU bodyU)
+    [(mk-let-funU funU maybe-tZ xU defU bodyU)
      (define in-tZ (new-uf-set))
      (define out-tZ (new-uf-set))
-     (and (checkU delta
+     (and (when maybe-tZ
+            (unify maybe-tZ (ArrowZ in-tZ out-tZ)))
+          (checkU delta
                   (hash-set* gamma
                     funU (ArrowZ in-tZ out-tZ)
                     xU in-tZ)
@@ -686,9 +692,11 @@
     [(mk-spliceU higherM)
      (and (checkM delta gamma higherM (DiaM ttZ))
           ttZ)]
-    [(mk-let-macroU xM defM bodyU)
+    [(mk-let-macroU xM maybe-tM defM bodyU)
      (define def-tM (new-uf-set))
-     (and (checkM delta gamma defM def-tM)
+     (and (when maybe-tM
+            (unify maybe-tM def-tM))
+          (checkM delta gamma defM def-tM)
           (checkU (hash-set delta xM def-tM) gamma bodyU ttZ))]))
 (define (inferU eeU)
   (define ttZ (new-uf-set))
@@ -839,10 +847,12 @@
      (and (checkE gamma funE (ArrowZ in-tZ out-tZ))
           (checkE gamma argE in-tZ)
           ttZ)]
-    [(mk-let-funE funE xE defE bodyE)
+    [(mk-let-funE funE maybe-tZ xE defE bodyE)
      (define in-tZ (new-uf-set))
      (define out-tZ (new-uf-set))
-     (and (checkE (hash-set* gamma
+     (and (when maybe-tZ
+            (unify maybe-tZ (ArrowZ in-tZ out-tZ)))
+          (checkE (hash-set* gamma
                     funE (ArrowZ in-tZ out-tZ)
                     xE in-tZ)
                   defE out-tZ)
@@ -975,7 +985,7 @@
         (match (evalM delta gamma-bar argM)
           [(nat-valM inM)
            (nat-valM (+ inM 1))])])]
-    [(mk-let-funM funM xM defM bodyM)
+    [(mk-let-funM funM _maybe-tM xM defM bodyM)
      (define (mk-fun)
        (clo-valM (hash-set delta funM mk-fun) gamma-bar xM defM))
      (evalM (hash-set delta funM mk-fun) gamma-bar bodyM)]
@@ -992,7 +1002,7 @@
         (evalM (hash-set delta succ-xM (λ () x)) gamma-bar succ-branchM)])]
     [(mk-quoteM lowerU)
      (quoted-valM (expandU delta gamma-bar lowerU))]
-    [(mk-let-diaM xU defM bodyM)
+    [(mk-let-diaM xU _maybe-tM defM bodyM)
      (match (evalM delta gamma-bar defM)
        [(quoted-valM lowerE)
         (evalM delta (hash-set gamma-bar xU lowerE) bodyM)])]))
@@ -1060,7 +1070,7 @@
      (define funE (expandU delta gamma-bar funU))
      (define argE (expandU delta gamma-bar argU))
      (mk-appE funE argE)]
-    [(mk-let-funU funU xU defU bodyU)
+    [(mk-let-funU funU maybe-tZ xU defU bodyU)
      (define defE (expandU delta (hash-set* gamma-bar
                                    funU (mk-varE funU)
                                    xU (mk-varE xU))
@@ -1068,7 +1078,7 @@
      (define bodyE (expandU delta (hash-set gamma-bar
                                     funU (mk-varE funU))
                             bodyU))
-     (mk-let-funE funU xU defE bodyE)]
+     (mk-let-funE funU maybe-tZ xU defE bodyE)]
     [(mk-zeroU)
      (mk-zeroE)]
     [(mk-succU)
@@ -1084,7 +1094,7 @@
      (match (evalM delta gamma-bar higherM)
        [(quoted-valM lowerE)
         lowerE])]
-    [(mk-let-macroU xU defM bodyU)
+    [(mk-let-macroU xU _maybe-tM defM bodyU)
      (define vM (evalM delta gamma-bar defM))
      (expandU (hash-set delta xU (λ () vM)) gamma-bar
               bodyU)]))
@@ -1242,7 +1252,7 @@
         (match (evalE gamma argE)
           [(nat-valE nE)
            (nat-valE (+ nE 1))])])]
-    [(mk-let-funE funE xE defE bodyE)
+    [(mk-let-funE funE _maybe-tZ xE defE bodyE)
      (define (mk-fun)
        (clo-valE (hash-set gamma funE mk-fun) xE defE))
      (evalE (hash-set gamma funE mk-fun) bodyE)]
