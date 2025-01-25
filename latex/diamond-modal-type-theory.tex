@@ -1,0 +1,441 @@
+\documentclass{article}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{trfrac}
+
+\begin{document}
+
+\section{Syntax}
+
+% eU ::= xU | \xU. eU | eU eU
+%      | $eM | let-macroU xM = eM in eU
+% eM ::= xM | \xM. eM | eM eM
+%      | 'eU | let-diaM xU = eM in eM
+% tZ ::= tZ -> tZ | NatZ
+% tM ::= tM -> tM | NatM | Dia tZ
+\noindent
+\[\arraycolsep=1.4pt
+\begin{array}{rlcrl}
+                 & \boxed{\text{\parbox{8.5em}{\centering
+                     \textbf{Phase 0}\\
+                     ($e_0$ pre-expansion,\\
+                     \hphantom{(}$e$ post-expansion)
+                   }}}
+                 & \hspace{2em} &
+                 & \boxed{\text{\parbox{8.5em}{\centering
+                     \textbf{Phase 1}\\
+                     (macro definitions)
+                   }}}
+                \vspace{1ex}
+                \\
+         e_0 ::= & x_0
+              \mid \lambda x_0.\,e_1
+              \mid e_0\;e_0
+              \mid \text{\$splice}\;e_1
+                 & \hspace{2em} &
+         e_1 ::= & x_1
+              \mid \lambda x_1.\,e_1
+              \mid e_1\;e_1
+              \mid \text{dia}(e_0)
+                \\
+            \mid & \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0
+                 & \hspace{2em}
+                 & 
+            \mid & \text{let-dia}\;x_0 = e_0\,\text{in}\;e_1
+                \vspace{1ex}
+                \\
+           e ::= & x
+              \mid \lambda x.\,e
+              \mid e\;e
+                \vspace{1ex}
+                \\
+\tau_0, \tau ::= & \tau \to \tau
+                 & \hspace{2em} &
+      \tau_1 ::= & \tau_1 \to \tau_1
+              \mid \Diamond \tau_0
+                \vspace{1ex}
+                \\
+           v ::= & \lambda x_0.\,e_0
+                 & \hspace{2em} &
+         v_1 ::= & \lambda x_1.\,e_1
+              \mid \text{dia}(e)
+\end{array}
+\]
+
+\section{Typing Rules}
+
+% xM : tM ∈ Δ
+% ------
+% {Δ}; Γ ⊢ xM : tM
+%
+% {Δ, xM : in-tM}; Γ ⊢ bodyM : out-tM
+% ------
+% {Δ}; Γ ⊢ \xM. bodyM : in-tM -> out-tM
+%
+% {Δ}; Γ ⊢ funM : in-tM -> out-tM
+% {Δ}; Γ ⊢ argM : in-tM
+% ------
+% {Δ}; Γ ⊢ funM argM : out-tM
+%
+% Δ; {Γ} ⊢ lowerU : inner-tZ
+% ------
+% {Δ}; Γ ⊢ 'lowerU : Dia inner-tZ
+%
+% {Δ}; Γ ⊢ defM : Dia lower-tZ
+% {Δ}; Γ, xU : lower-tZ ⊢ bodyM : tM
+% ------
+% {Δ}; Γ ⊢ let-diaM xU = defM in bodyM : tM
+
+% xU : tZ ∈ Δ
+% ------
+% Δ; {Γ} ⊢ xU : tZ
+%
+% Δ; {Γ, xU : in-tZ} ⊢ bodyU : out-tZ
+% ------
+% Δ; {Γ} ⊢ \xU. bodyU : in-tZ -> out-tZ
+%
+% Δ; {Γ} ⊢ funU : in-tZ -> out-tZ
+% Δ; {Γ} ⊢ argU : in-tZ
+% ------
+% Δ; {Γ} ⊢ funU argU : out-tZ
+%
+% {Δ}; Γ ⊢ higherM : Dia lower-tZ
+% ------
+% Δ; {Γ} ⊢ $higherM : lower-tZ
+%
+% {Δ}; Γ ⊢ defM : x-tM
+% Δ, xM : x-tM; {Γ} ⊢ bodyU : tZ
+% ------
+% Δ; {Γ} ⊢ let-macroU xM = defM in bodyU : tZ
+
+\vspace{2ex}
+\noindent
+\[\arraycolsep=0em
+\begin{array}{ccccc}
+  \boxed{\Delta; \Gamma \vdash_0 e_0 :\tau_0}
+  &
+  \boxed{\Gamma \vdash e :\tau}
+  &
+  \boxed{\Delta; \Gamma \vdash_1 e_1 :\tau_1}
+\vspace{3ex}
+\\
+  &
+  \makebox[0em]{\centering \textbf{Lambda calculus fragment}}
+  &
+\vspace{1ex}
+\\
+  \trfrac
+  {x_0 :\tau_0 \in \Gamma}
+  {\Delta; \Gamma \vdash_0 x_0 :\tau_0}
+  &
+  \trfrac
+  {x :\tau \in \Gamma}
+  {\Gamma \vdash x :\tau}
+  &
+  \trfrac
+  {x_1 :\tau_1 \in \Delta}
+  {\Delta; \Gamma \vdash_1 x_1 :\tau_1}
+\vspace{2ex}
+\\
+  \trfrac
+  {\Delta; \Gamma, x_0 : \tau^{\text{in}}_0 \vdash_0 e_0 : \tau^{\text{out}}_0}
+  {\Delta; \Gamma \vdash_0 \lambda x_0.\,e_0 :\tau^{\text{in}}_0 \to \tau^{\text{out}}_0}
+  &
+  \trfrac
+  {\Delta; \Gamma, x : \tau^{\text{in}} \vdash e : \tau^{\text{out}}}
+  {\Delta; \Gamma \vdash \lambda x.\,e :\tau^{\text{in}} \to \tau^{\text{out}}}
+  &
+  \trfrac
+  {\Delta, x_1 : \tau^{\text{in}}_1; \Gamma \vdash_0 e_1 : \tau^{\text{out}}_1}
+  {\Delta; \Gamma \vdash_1 \lambda x_1.\,e_1 :\tau^{\text{in}}_1 \to \tau^{\text{out}}_1}
+\vspace{2ex}
+\\
+  \trfrac
+  {
+    \begin{trgather}
+    \Delta; \Gamma \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}}_0 \to \tau^{\text{out}}_0
+    \vspace{0.5ex}
+    \\
+    \Delta; \Gamma \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}_0
+    \end{trgather}
+  }
+  {\Delta; \Gamma \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}_0}
+  &
+  \trfrac
+  {
+    \begin{trgather}
+    \Delta; \Gamma \vdash e^{\text{fun}} : \tau^{\text{in}} \to \tau^{\text{out}}
+    \vspace{0.5ex}
+    \\
+    \Delta; \Gamma \vdash e^{\text{in}} : \tau^{\text{in}}
+    \end{trgather}
+  }
+  {\Delta; \Gamma \vdash e^{\text{fun}}\;e^{\text{in}} : \tau^{\text{out}}}
+  &
+  \trfrac
+  {
+    \begin{trgather}
+    \Delta; \Gamma \vdash_1 e^{\text{fun}}_1 : \tau^{\text{in}}_1 \to \tau^{\text{out}}_1
+    \vspace{0.5ex}
+    \\
+    \Delta; \Gamma \vdash_1 e^{\text{in}}_1 : \tau^{\text{in}}_1
+    \end{trgather}
+  }
+  {\Delta; \Gamma \vdash_1 e^{\text{fun}}_1\;e^{\text{in}}_1 : \tau^{\text{out}}_1}
+\vspace{3ex}
+\\
+  &
+  \makebox[0em]{\centering \textbf{Modal fragment}}
+  &
+\vspace{1ex}
+\\
+  \trfrac
+  {
+    \begin{trgather}
+    \Delta; \Gamma \vdash_1 e_1 : \tau_1
+    \vspace{0.5ex}
+    \\
+    \Delta, x_1 : \tau_1; \Gamma \vdash_0 e_0 : \tau_0
+    \end{trgather}
+  }
+  {\Delta; \Gamma \vdash_0 \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 : \tau_0}
+  &
+  &
+  \trfrac
+  {
+    \begin{trgather}
+    \Delta; \Gamma \vdash_1 e^{\text{x}}_1 : \Diamond \tau_0
+    \vspace{0.5ex}
+    \\
+    \Delta; \Gamma, x_0 : \tau_0 \vdash_1 e^{\text{body}}_1 : \tau_1
+    \end{trgather}
+  }
+  {\Delta; \Gamma \vdash_1 \text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
+\vspace{2ex}
+\\
+  \trfrac
+  {\Delta; \Gamma \vdash_1 e_1 : \Diamond \tau_0}
+  {\Delta; \Gamma \vdash_0 \text{\$splice}\;e_1 : \tau_0}
+  &
+  &
+  \trfrac
+  {\Delta; \Gamma \vdash_0 e_0 : \tau_0}
+  {\Delta; \Gamma \vdash_1 \text{dia}(e_0) : \Diamond \tau_0}
+\end{array}
+\]
+
+\newpage
+
+\section{Big-Steps Operational Semantics}
+
+% big-steps semantics for Macro-level phase 1 terms. note that
+%
+%   Δ; {Γ̅} ⊢ eU => eE
+%
+% is expansion, not evaluation, and that Γ̅ maps variables to Expanded phase 0
+% terms, not to phase 0 values.
+%
+% xM ↦ vM ∈ Δ
+% ------
+% {Δ}; Γ̅ ⊢ xM => vM
+%
+% ------
+% {Δ}; Γ̅ ⊢ \xM. bodyM => clo Δ Γ̅ xM bodyM
+%
+% {Δ}; Γ̅ ⊢ funM => clo clo-Δ clo-Γ xM bodyM
+% {Δ}; Γ̅ ⊢ argM => inM
+% {clo-Δ, xM ↦ inM}; clo-Γ ⊢ bodyM => outM
+% ------
+% {Δ}; Γ̅ ⊢ funM arg2M => outM
+%
+% ext-Δ@{Δ, funM ↦ clo ext-Δ Γ̅ xM defM}; Γ̅ ⊢ bodyM => vM
+% ------
+% {Δ}; Γ̅ ⊢ let-fun funM xM = defM in bodyM => vM
+%
+% ------
+% {Δ}; Γ̅ ⊢ succ => succ
+%
+% {Δ}; Γ̅ ⊢ funM => succ
+% {Δ}; Γ̅ ⊢ argM => nM
+% ------
+% {Δ}; Γ̅ ⊢ funM arg2M => succ nM
+%
+% {Δ}; Γ̅ ⊢ scrutM => succ nM
+% {Δ, succ-xM ↦ nM}; Γ̅ ⊢ succ-branchM => vM
+% ------
+% {Δ}; Γ̅ ⊢ case-nat scrutM of
+%            { succ succ-xM -> succ-branchM
+%            }
+%       => vM
+%
+% Δ; {Γ̅} ⊢ lowerU => lowerE
+% ------
+% {Δ}; Γ̅ ⊢ 'lowerU => 'lowerE
+%
+% {Δ}; Γ̅ ⊢ defM => 'lowerE
+% {Δ}; Γ, xU ↦ lowerE ⊢ bodyM => vM
+% ------
+% {Δ}; Γ̅̅ ⊢ let-diaM xU = defM in body
+
+\[\arraycolsep=0em
+\begin{array}{cccccc}
+  \boxed{e_0 \Downarrow_0 v}
+  &
+  &
+  \boxed{e \Downarrow v}
+  &
+  &
+  \boxed{e_1 \Downarrow_1 v_1}
+\vspace{3ex}
+\\
+  &
+  &
+  &
+  \makebox[0em]{\centering \textbf{Lambda calculus fragment}}
+  &
+\vspace{-1ex}
+\\
+  \parbox{7.5em}{
+    \vspace*{-2em}
+    $
+    \trfrac
+    {
+      e_0 \Downarrow_E e
+      \qquad
+      e \Downarrow v
+    }
+    {e_0 \Downarrow_0 v}
+    $
+  }
+  &
+  &
+  \trfrac
+  {}
+  {\lambda x.\,e \Downarrow \lambda x.\,e}
+  &
+  &
+  \trfrac
+  {}
+  {\lambda x_1.\,e_1 \Downarrow_1 \lambda x_1.\,e_1}
+\vspace{2ex}
+\\
+  & \hspace{2em} &
+  \trfrac
+  {
+    \begin{trgather}
+    e^{\text{fun}} \Downarrow \lambda x.\,e^{\text{out}}
+    \qquad
+    e^{\text{in}} \Downarrow v^{\text{in}}
+    \vspace{0.5ex}
+    \\
+    e^{\text{out}}[v^{\text{in}}/x] \Downarrow v^{\text{out}}
+    \vspace{0.5ex}
+    \end{trgather}
+  }
+  {e^{\text{fun}}\;e^{\text{in}} \Downarrow v^{\text{out}}}
+  & \hspace{2em} &
+  \trfrac
+  {
+    \begin{trgather}
+    e^{\text{fun}}_1 \Downarrow_1 \lambda x_1.\,e^{\text{out}}_1
+    \qquad
+    e^{\text{in}}_1 \Downarrow_1 v^{\text{in}}_1
+    \vspace{0.5ex}
+    \\
+    e^{\text{out}}_1[v^{\text{in}}_1/x_1] \Downarrow_1 v^{\text{out}}_1
+    \vspace{0.5ex}
+    \end{trgather}
+  }
+  {e^{\text{fun}}_1\;e^{\text{in}}_1 \Downarrow_1 v^{\text{out}}_1}
+\vspace{3ex}
+\\
+  &
+  &
+  &
+  &
+  \makebox[0em]{\centering \textbf{Modal fragment}}
+\vspace{1ex}
+\\
+  &
+  &
+  &
+  &
+  \trfrac
+  {
+    \begin{trgather}
+    e^{\text{x}}_1 \Downarrow_1 \text{dia}(e)
+    \vspace{0.5ex}
+    \\
+    e^{\text{body}}_1[e/x_0] \Downarrow_1 v_1
+    \end{trgather}
+  }
+  {\text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 \Downarrow_1 v_1}
+\vspace{2ex}
+\\
+  &
+  &
+  &
+  &
+  \trfrac
+  {e_0 \Downarrow_{\text{E}} e}
+  {\text{dia}(e_0) \Downarrow_1 \text{dia}(e)}
+\end{array}
+\]
+
+\vspace{2ex}
+
+\[\arraycolsep=0.5em
+\begin{array}{ccc}
+  &
+  \makebox[0em]{\boxed{\text{\parbox{5.5em}{\centering
+    \textbf{Expansion}\\
+    $e_0 \Downarrow_{\text{E}} e$
+  }}}}
+  &
+\vspace{3ex}
+\\
+  &
+  \makebox[0em]{\centering \textbf{Lambda calculus fragment}}
+  &
+\vspace{1ex}
+\\
+  \trfrac
+  {}
+  {x_0 \Downarrow_{\text{E}} x}
+  \hspace{2em} 
+  \trfrac
+  {e_0 \Downarrow_{\text{E}} e}
+  {\lambda x_0.\,e_0 \Downarrow_{\text{E}} \lambda x.\,e}
+  &
+  &
+  \trfrac
+  {
+    e^{\text{fun}}_0 \Downarrow_{\text{E}} e^{\text{fun}}
+    \qquad
+    e^{\text{in}}_0 \Downarrow_{\text{E}} e^{\text{in}}
+  }
+  {e^{\text{fun}}_0\;e^{\text{in}}_0 \Downarrow_{\text{E}} e^{\text{fun}}\;e^{\text{in}}}
+\vspace{3ex}
+\\
+  &
+  \makebox[0em]{\centering \textbf{Modal fragment}}
+  &
+\vspace{1ex}
+\\
+  \trfrac
+  {
+    e_1 \Downarrow_1 v_1
+    \qquad
+    e_0[v_1/x_1] \Downarrow_{\text{E}} e
+  }
+  {\text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 \Downarrow_0 e}
+  &
+  &
+  \trfrac
+  {e_1 \Downarrow_1 \text{dia}(e)}
+  {\text{\$splice}\;e_1 \Downarrow_{\text{E}} e}
+\end{array}
+\]
+
+\end{document}
