@@ -2,5 +2,5 @@
 set -e
 
 clear
-pdflatex -halt-on-error diamond-modal-type-theory.tex
+pdflatex -halt-on-error staged-diamond-type-theory.tex
 echo "success."
