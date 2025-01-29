@@ -14,7 +14,7 @@ A variant of Pfenning and Davies's Staged Modal Calculus with Diamond instead of
     context". This is accomplished by making sure that the stage-0 expression is
     closed, that is, it does not refer to any variable it doesn't define itself.
 *   The "Diamond" modality means that something is "true in some world". In the
-    case of Pfenning and Davies's calculus, a value of type Diamond Int is the
+    case of the Staged Diamond Calculus, a value of type Diamond Int is the
     code of a stage-0 expression which can successfully be spliced in one
     specific context, namely, the one into which the stage-0 expression which is
     currently being assembled will eventually be spliced.
