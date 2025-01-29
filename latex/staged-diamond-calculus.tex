@@ -6,7 +6,9 @@
 
 \begin{document}
 
-\section{Syntax}
+\section{Staged Diamond Type Theory}
+
+\subsection{Syntax}
 
 % eU ::= xU | \xU. eU | eU eU
 %      | $eM | let-macroU xM = eM in eU
@@ -14,6 +16,7 @@
 %      | 'eU | let-diaM xU = eM in eM
 % tZ ::= tZ -> tZ | NatZ
 % tM ::= tM -> tM | NatM | Dia tZ
+\vspace{2ex}
 \noindent
 \[\arraycolsep=1.4pt
 \begin{array}{rlcrl}
@@ -56,10 +59,21 @@
               \mid \Diamond \tau_0
                 \vspace{1ex}
                 \\
-           v ::= & \lambda x_0.\,e_0
+           v ::= & \lambda x.\,e
                  & \hspace{2em} &
          v_1 ::= & \lambda x_1.\,e_1
               \mid \text{dia}(e)
+                \vspace{1ex}
+                \\
+    \Gamma_0 ::= & \cdot
+              \mid \Gamma_0, x_0 : \tau_0
+                 & \hspace{2em} &
+    \Gamma_1 ::= & \cdot
+              \mid \Gamma_1, x_1 : \tau_1
+                \vspace{1ex}
+                \\
+      \Gamma ::= & \cdot
+              \mid \Gamma, x : \tau
 \end{array}
 \]
 
@@ -113,11 +127,11 @@
 \noindent
 \[\arraycolsep=0em
 \begin{array}{ccccc}
-  \boxed{\Delta; \Gamma \vdash_0 e_0 :\tau_0}
+  \boxed{\Gamma_1; \Gamma_0 \vdash_0 e_0 :\tau_0}
   &
   \boxed{\Gamma \vdash e :\tau}
   &
-  \boxed{\Delta; \Gamma \vdash_1 e_1 :\tau_1}
+  \boxed{\Gamma_1; \Gamma_0 \vdash_1 e_1 :\tau_1}
 \vspace{3ex}
 \\
   &
@@ -126,63 +140,63 @@
 \vspace{1ex}
 \\
   \trfrac
-  {x_0 :\tau_0 \in \Gamma}
-  {\Delta; \Gamma \vdash_0 x_0 :\tau_0}
+  {x_0 :\tau_0 \in \Gamma_0}
+  {\Gamma_1; \Gamma_0 \vdash_0 x_0 :\tau_0}
   &
   \trfrac
   {x :\tau \in \Gamma}
   {\Gamma \vdash x :\tau}
   &
   \trfrac
-  {x_1 :\tau_1 \in \Delta}
-  {\Delta; \Gamma \vdash_1 x_1 :\tau_1}
+  {x_1 :\tau_1 \in \Gamma_1}
+  {\Gamma_1; \Gamma_0 \vdash_1 x_1 :\tau_1}
 \vspace{2ex}
 \\
   \trfrac
-  {\Delta; \Gamma, x_0 : \tau^{\text{in}}_0 \vdash_0 e_0 : \tau^{\text{out}}_0}
-  {\Delta; \Gamma \vdash_0 \lambda x_0.\,e_0 :\tau^{\text{in}}_0 \to \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma_0, x_0 : \tau^{\text{in}}_0 \vdash_0 e_0 : \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma_0 \vdash_0 \lambda x_0.\,e_0 :\tau^{\text{in}}_0 \to \tau^{\text{out}}_0}
   &
   \trfrac
-  {\Delta; \Gamma, x : \tau^{\text{in}} \vdash e : \tau^{\text{out}}}
-  {\Delta; \Gamma \vdash \lambda x.\,e :\tau^{\text{in}} \to \tau^{\text{out}}}
+  {\Gamma_1; \Gamma, x : \tau^{\text{in}} \vdash e : \tau^{\text{out}}}
+  {\Gamma_1; \Gamma \vdash \lambda x.\,e :\tau^{\text{in}} \to \tau^{\text{out}}}
   &
   \trfrac
-  {\Delta, x_1 : \tau^{\text{in}}_1; \Gamma \vdash_0 e_1 : \tau^{\text{out}}_1}
-  {\Delta; \Gamma \vdash_1 \lambda x_1.\,e_1 :\tau^{\text{in}}_1 \to \tau^{\text{out}}_1}
+  {\Gamma_1, x_1 : \tau^{\text{in}}_1; \Gamma_0 \vdash_0 e_1 : \tau^{\text{out}}_1}
+  {\Gamma_1; \Gamma_0 \vdash_1 \lambda x_1.\,e_1 :\tau^{\text{in}}_1 \to \tau^{\text{out}}_1}
 \vspace{2ex}
 \\
   \trfrac
   {
     \begin{trgather}
-    \Delta; \Gamma \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}}_0 \to \tau^{\text{out}}_0
+    \Gamma_1; \Gamma_0 \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}}_0 \to \tau^{\text{out}}_0
     \vspace{0.5ex}
     \\
-    \Delta; \Gamma \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}_0
+    \Gamma_1; \Gamma_0 \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}_0
     \end{trgather}
   }
-  {\Delta; \Gamma \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma_0 \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}_0}
   &
   \trfrac
   {
     \begin{trgather}
-    \Delta; \Gamma \vdash e^{\text{fun}} : \tau^{\text{in}} \to \tau^{\text{out}}
+    \Gamma_1; \Gamma \vdash e^{\text{fun}} : \tau^{\text{in}} \to \tau^{\text{out}}
     \vspace{0.5ex}
     \\
-    \Delta; \Gamma \vdash e^{\text{in}} : \tau^{\text{in}}
+    \Gamma_1; \Gamma \vdash e^{\text{in}} : \tau^{\text{in}}
     \end{trgather}
   }
-  {\Delta; \Gamma \vdash e^{\text{fun}}\;e^{\text{in}} : \tau^{\text{out}}}
+  {\Gamma_1; \Gamma \vdash e^{\text{fun}}\;e^{\text{in}} : \tau^{\text{out}}}
   &
   \trfrac
   {
     \begin{trgather}
-    \Delta; \Gamma \vdash_1 e^{\text{fun}}_1 : \tau^{\text{in}}_1 \to \tau^{\text{out}}_1
+    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{fun}}_1 : \tau^{\text{in}}_1 \to \tau^{\text{out}}_1
     \vspace{0.5ex}
     \\
-    \Delta; \Gamma \vdash_1 e^{\text{in}}_1 : \tau^{\text{in}}_1
+    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{in}}_1 : \tau^{\text{in}}_1
     \end{trgather}
   }
-  {\Delta; \Gamma \vdash_1 e^{\text{fun}}_1\;e^{\text{in}}_1 : \tau^{\text{out}}_1}
+  {\Gamma_1; \Gamma_0 \vdash_1 e^{\text{fun}}_1\;e^{\text{in}}_1 : \tau^{\text{out}}_1}
 \vspace{3ex}
 \\
   &
@@ -193,35 +207,35 @@
   \trfrac
   {
     \begin{trgather}
-    \Delta; \Gamma \vdash_1 e_1 : \tau_1
+    \Gamma_1; \Gamma_0 \vdash_1 e_1 : \tau_1
     \vspace{0.5ex}
     \\
-    \Delta, x_1 : \tau_1; \Gamma \vdash_0 e_0 : \tau_0
+    \Gamma_1, x_1 : \tau_1; \Gamma_0 \vdash_0 e_0 : \tau_0
     \end{trgather}
   }
-  {\Delta; \Gamma \vdash_0 \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 : \tau_0}
+  {\Gamma_1; \Gamma_0 \vdash_0 \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 : \tau_0}
   &
   &
   \trfrac
   {
     \begin{trgather}
-    \Delta; \Gamma \vdash_1 e^{\text{x}}_1 : \Diamond \tau_0
+    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{x}}_1 : \Diamond \tau_0
     \vspace{0.5ex}
     \\
-    \Delta; \Gamma, x_0 : \tau_0 \vdash_1 e^{\text{body}}_1 : \tau_1
+    \Gamma_1; \Gamma_0, x_0 : \tau_0 \vdash_1 e^{\text{body}}_1 : \tau_1
     \end{trgather}
   }
-  {\Delta; \Gamma \vdash_1 \text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
+  {\Gamma_1; \Gamma_0 \vdash_1 \text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
 \vspace{2ex}
 \\
   \trfrac
-  {\Delta; \Gamma \vdash_1 e_1 : \Diamond \tau_0}
-  {\Delta; \Gamma \vdash_0 \text{\$splice}\;e_1 : \tau_0}
+  {\Gamma_1; \Gamma_0 \vdash_1 e_1 : \Diamond \tau_0}
+  {\Gamma_1; \Gamma_0 \vdash_0 \text{\$splice}\;e_1 : \tau_0}
   &
   &
   \trfrac
-  {\Delta; \Gamma \vdash_0 e_0 : \tau_0}
-  {\Delta; \Gamma \vdash_1 \text{dia}(e_0) : \Diamond \tau_0}
+  {\Gamma_1; \Gamma_0 \vdash_0 e_0 : \tau_0}
+  {\Gamma_1; \Gamma_0 \vdash_1 \text{dia}(e_0) : \Diamond \tau_0}
 \end{array}
 \]
 
@@ -278,6 +292,7 @@
 % ------
 % {Δ}; Γ̅̅ ⊢ let-diaM xU = defM in body
 
+\vspace{2ex}
 \[\arraycolsep=0em
 \begin{array}{cccccc}
   \boxed{e_0 \Downarrow_0 v}
@@ -435,6 +450,116 @@
   \trfrac
   {e_1 \Downarrow_1 \text{dia}(e)}
   {\text{\$splice}\;e_1 \Downarrow_{\text{E}} e}
+\end{array}
+\]
+
+\section{Staged Box Type Theory}
+
+\vspace{2ex}
+\noindent
+\[\arraycolsep=0em
+\begin{array}{ccc}
+  &
+  \makebox[0em]{\centering \boxed{\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash e :\tau}}
+  &
+\vspace{3ex}
+\\
+  &
+  \makebox[0em]{\centering \textbf{Lambda calculus fragment}}
+  &
+\vspace{1ex}
+\\
+  &
+  \makebox[0em]{\centering
+  $\trfrac
+  {x :\tau \in \Gamma_1}
+  {\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash x :\tau}
+  $}
+  &
+\vspace{2ex}
+\\
+  \trfrac
+  {\Delta; \Gamma_n; \ldots; \Gamma_1, x : \tau^{\text{in}} \vdash e : \tau^{\text{out}}}
+  {\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash \lambda x.\,e :\tau^{\text{in}} \to \tau^{\text{out}}}
+  & \hspace{2em} &
+  \trfrac
+  {
+    \begin{tralign}
+    \Delta; \Gamma_n; \ldots; \Gamma_1 \vdash & e^{\text{fun}} : \tau^{\text{in}} \to \tau^{\text{out}}
+    \vspace{0.5ex}
+    \\
+    \Delta; \Gamma_n; \ldots; \Gamma_1 \vdash & e^{\text{in}} : \tau^{\text{in}}
+    \end{tralign}
+  }
+  {\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash e^{\text{fun}}\;e^{\text{in}} : \tau^{\text{out}}}
+\vspace{3ex}
+\\
+  \makebox[0em]{\centering \textbf{Modal fragment}}
+\vspace{1ex}
+\\
+  &
+  \makebox[0em]{\centering
+  $\trfrac
+  {x :\tau \in \Delta}
+  {\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash x :\tau}
+  $}
+  &
+\vspace{2ex}
+\\
+  \trfrac
+  {\Delta; \Gamma_n; \ldots; \Gamma_1; \cdot \vdash e : \tau}
+  {\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash \text{box}(e) : \Box \tau}
+  & \hspace{2em} &
+  \trfrac
+  {
+    \begin{tralign}
+    \Delta; \Gamma_n; \ldots; \Gamma_1 \vdash & e^{\text{x}} : \Box \tau^{\text{x}}
+    \vspace{0.5ex}
+    \\
+    \Delta, x : \tau^{\text{x}}; \Gamma_n; \ldots; \Gamma_1 \vdash & e^{\text{body}} : \tau^{\text{body}}
+    \end{tralign}
+  }
+  {\Delta; \Gamma_n; \ldots; \Gamma_1 \vdash \text{let-box}\;x = e^{\text{x}}\,\text{in}\;e^{\text{body}} : \tau^{\text{body}}}
+\end{array}
+\]
+
+\vspace{2ex}
+\subsection{Comparison}
+
+\vspace{2ex}
+\noindent
+\[\arraycolsep=0em
+\begin{array}{ccc}
+  \trfrac
+  {\Delta; \Gamma_1; \cdot \vdash e : \tau}
+  {\Delta; \Gamma_1 \vdash \text{box}(e) : \Box \tau}
+  & \hspace{2em} &
+  \trfrac
+  {\Gamma_1; \Gamma_0 \vdash_0 e_0 : \tau_0}
+  {\Gamma_1; \Gamma_0 \vdash_1 \text{dia}(e_0) : \Diamond \tau_0}
+\vspace{2ex}
+\\
+  \trfrac
+  {
+    \begin{tralign}
+    \Delta; \Gamma_1 \vdash & e^{\text{x}} : \Box \tau^{\text{x}}
+    \vspace{0.5ex}
+    \\
+    \Delta, x : \tau^{\text{x}}; \Gamma_1 \vdash & e^{\text{body}} : \tau^{\text{body}}
+    \end{tralign}
+  }
+  {\Delta; \Gamma_1 \vdash \text{let-box}\;x = e^{\text{x}}\,\text{in}\;e^{\text{body}} : \tau^{\text{body}}}
+  & \hspace{2em} &
+  \trfrac
+  {
+    \begin{trgather}
+    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{x}}_1 : \Diamond \tau_0
+    \vspace{0.5ex}
+    \\
+    \Gamma_1; \Gamma_0, x_0 : \tau_0 \vdash_1 e^{\text{body}}_1 : \tau_1
+    \end{trgather}
+  }
+  {\Gamma_1; \Gamma_0 \vdash_1 \text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
 \end{array}
 \]
 

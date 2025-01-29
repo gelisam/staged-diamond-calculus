@@ -1,6 +1,6 @@
-# Staged Diamond Type Theory
+# Staged Diamond Calculus
 
-A variant of Staged Modal Type Theory with Diamond instead of Box.
+A variant of Pfenning and Davies's Staged Modal Calculus with Diamond instead of Box.
 
 *   "Staged" means that we can write stage-1 code to assemble stage-0 code from
     smaller parts.
@@ -8,15 +8,15 @@ A variant of Staged Modal Type Theory with Diamond instead of Box.
     between a value of type Int and the code of a stage-0 expression which
     produces a value of type Int.
 *   The "Box" modality means that something is "true in all possible worlds". In
-    the case of Staged Modal Type Theory, a value of type Box Int is the code of a
-    stage-0 expression which can successfully be spliced anywhere, regardless of
-    which variables are in scope at that point, in "every possible context". This
-    is accomplished by making sure that the stage-0 expression is closed, that is,
-    it does not refer to any variable it doesn't define itself.
+    the case of Pfenning and Davies's calculus, a value of type `Box Int` is the
+    code of a stage-0 expression which can successfully be spliced anywhere,
+    regardless of which variables are in scope at that point, in "every possible
+    context". This is accomplished by making sure that the stage-0 expression is
+    closed, that is, it does not refer to any variable it doesn't define itself.
 *   The "Diamond" modality means that something is "true in some world". In the
-    case of Staged Diamond Type Theory, a value of type Diamond Int is the code of
-    a stage-0 expression which can successfully be spliced in one specific
-    context, namely, the one into which the stage-0 expression which is
+    case of Pfenning and Davies's calculus, a value of type Diamond Int is the
+    code of a stage-0 expression which can successfully be spliced in one
+    specific context, namely, the one into which the stage-0 expression which is
     currently being assembled will eventually be spliced.
 
 ## Examples
@@ -112,3 +112,49 @@ site. This time, it is `$splice` which acts as a boundary ensuring that
 ## Big-Steps Operational Semantics
 
 ![](operational-semantics.png)
+
+## Comparison with Pfenning and Davies
+
+The Staged Diamond Calculus and Pfenning and Davies's Staged Box Calculus both
+use two contexts, but those contexts have very different meanings. The Staged
+Diamond Calculus only supports two stages: `Dia Int` is a phase-1 type, but
+`Dia (Dia Int)` would be a phase-2 type and the calculus does not have a stage
+2. By contrast, `Box (Box Int)` is a valid type in the Staged Box Calculus,
+which supports an unbounded number of stages despite only using two contexts. To
+make it easier to compare the two calculi, here is a reformulation of the Staged
+Box Calculus which uses an unbounded number of contexts. Those extra contexts
+are purely decorative, they do not affect the semantics of the calculus, as only
+the leftmost and the rightmost contexts are accessible.
+
+![](staged-box-calculus.png)
+
+Specializing those rules to the `n = 1` case, we can finally compare the Staged
+Box Calculus and the Staged Diamond Calculus on an equal footing.
+
+![](comparison.png)
+
+We can now see that both introduction rules type-check a term in a different
+context, but that Box uses a new empty context while Diamond reuses an existing
+context which might already contain some variables.
+
+As a result, the eliminator for Box can add `x` to the special Delta context
+whose variables can be accessed from everywhere, while Diamond must add `x` to
+the one context where the code fragment makes sense.
+
+## Open Questions
+
+Does the Staged Diamond Calculus already exist in the litterature under a
+different name?
+
+How to extend the Staged Diamond Calculus to an unbounded number of contexts?
+
+Is there an equivalent to `$splice` which makes sense in the Staged Box
+Calculus, and similarly for `$let-macro`?
+
+How to define a contextual version of the Diamond modality?
+
+How to split the Diamond modality into two half-modalities, in the style of
+Adjoint Calculus?
+
+Can we combine Box and Diamond in a single calculus, and if so, does the result
+correspond to any specific flavor of Modal Logic?
