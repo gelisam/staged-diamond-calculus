@@ -21,6 +21,8 @@ A variant of Pfenning and Davies's Staged Modal Calculus with Diamond instead of
 
 ## Examples
 
+### Example 1
+
 Here is a example program.
 ```
 (define (cube0 x0)
@@ -72,6 +74,8 @@ another part of the phase-1 code, outside the scope where `x0` is bound. The
 only thing which can be done with those code fragments is to `$splice` them
 within the body of the `$let-macro`, where it is safe to do so because `x0` is
 in scope.
+
+### Example 2
 
 Here is a slight variant of the above example.
 ```
