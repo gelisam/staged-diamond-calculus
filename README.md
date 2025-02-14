@@ -23,7 +23,7 @@ A variant of Pfenning and Davies's Staged Modal Calculus with Diamond instead of
 
 ### Example 1
 
-Here is a example program.
+Here is an example program.
 ```
 (define (cube x)
   ($let-macro [(power1 n1)
