@@ -32,8 +32,8 @@
                    }}}
                 \vspace{1ex}
                 \\
-         e_0 ::= & x_0
-              \mid \lambda x_0.\,e_0
+         e_0 ::= & x
+              \mid \lambda x.\,e_0
               \mid e_0\;e_0
               \mid \text{\$splice}\;e_1
                  & \hspace{2em} &
@@ -45,7 +45,7 @@
             \mid & \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0
                  & \hspace{2em}
                  & 
-            \mid & \text{let-dia}\;x_0 = e_1\,\text{in}\;e_1
+            \mid & \text{let-dia}\;x = e_1\,\text{in}\;e_1
                 \vspace{1ex}
                 \\
            e ::= & x
@@ -53,10 +53,10 @@
               \mid e\;e
                 \vspace{1ex}
                 \\
-\tau_0, \tau ::= & \tau \to \tau
+        \tau ::= & \tau \to \tau
                  & \hspace{2em} &
       \tau_1 ::= & \tau_1 \to \tau_1
-              \mid \Diamond \tau_0
+              \mid \Diamond \tau
                 \vspace{1ex}
                 \\
            v ::= & \lambda x.\,e
@@ -65,15 +65,11 @@
               \mid \text{dia}(e)
                 \vspace{1ex}
                 \\
-    \Gamma_0 ::= & \cdot
-              \mid \Gamma_0, x_0 : \tau_0
+      \Gamma ::= & \cdot
+              \mid \Gamma, x : \tau
                  & \hspace{2em} &
     \Gamma_1 ::= & \cdot
               \mid \Gamma_1, x_1 : \tau_1
-                \vspace{1ex}
-                \\
-      \Gamma ::= & \cdot
-              \mid \Gamma, x : \tau
 \end{array}
 \]
 
@@ -127,11 +123,11 @@
 \noindent
 \[\arraycolsep=0em
 \begin{array}{ccccc}
-  \boxed{\Gamma_1; \Gamma_0 \vdash_0 e_0 :\tau_0}
+  \boxed{\Gamma_1; \Gamma \vdash_0 e_0 :\tau}
   &
   \boxed{\Gamma \vdash e :\tau}
   &
-  \boxed{\Gamma_1; \Gamma_0 \vdash_1 e_1 :\tau_1}
+  \boxed{\Gamma_1; \Gamma \vdash_1 e_1 :\tau_1}
 \vspace{3ex}
 \\
   &
@@ -140,8 +136,8 @@
 \vspace{1ex}
 \\
   \trfrac
-  {x_0 :\tau_0 \in \Gamma_0}
-  {\Gamma_1; \Gamma_0 \vdash_0 x_0 :\tau_0}
+  {x :\tau \in \Gamma}
+  {\Gamma_1; \Gamma \vdash_0 x : \tau}
   &
   \trfrac
   {x :\tau \in \Gamma}
@@ -149,32 +145,32 @@
   &
   \trfrac
   {x_1 :\tau_1 \in \Gamma_1}
-  {\Gamma_1; \Gamma_0 \vdash_1 x_1 :\tau_1}
+  {\Gamma_1; \Gamma \vdash_1 x_1 :\tau_1}
 \vspace{2ex}
 \\
   \trfrac
-  {\Gamma_1; \Gamma_0, x_0 : \tau^{\text{in}}_0 \vdash_0 e_0 : \tau^{\text{out}}_0}
-  {\Gamma_1; \Gamma_0 \vdash_0 \lambda x_0.\,e_0 :\tau^{\text{in}}_0 \to \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma, x : \tau^{\text{in}}_0 \vdash_0 e_0 : \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma \vdash_0 \lambda x.\,e_0 :\tau^{\text{in}}_0 \to \tau^{\text{out}}_0}
   &
   \trfrac
   {\Gamma, x : \tau^{\text{in}} \vdash e : \tau^{\text{out}}}
   {\Gamma \vdash \lambda x.\,e :\tau^{\text{in}} \to \tau^{\text{out}}}
   &
   \trfrac
-  {\Gamma_1, x_1 : \tau^{\text{in}}_1; \Gamma_0 \vdash_0 e_1 : \tau^{\text{out}}_1}
-  {\Gamma_1; \Gamma_0 \vdash_1 \lambda x_1.\,e_1 :\tau^{\text{in}}_1 \to \tau^{\text{out}}_1}
+  {\Gamma_1, x_1 : \tau^{\text{in}}_1; \Gamma \vdash_0 e_1 : \tau^{\text{out}}_1}
+  {\Gamma_1; \Gamma \vdash_1 \lambda x_1.\,e_1 :\tau^{\text{in}}_1 \to \tau^{\text{out}}_1}
 \vspace{2ex}
 \\
   \trfrac
   {
     \begin{trgather}
-    \Gamma_1; \Gamma_0 \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}}_0 \to \tau^{\text{out}}_0
+    \Gamma_1; \Gamma \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}}_0 \to \tau^{\text{out}}_0
     \vspace{0.5ex}
     \\
-    \Gamma_1; \Gamma_0 \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}_0
+    \Gamma_1; \Gamma \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}_0
     \end{trgather}
   }
-  {\Gamma_1; \Gamma_0 \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}_0}
   &
   \trfrac
   {
@@ -190,13 +186,13 @@
   \trfrac
   {
     \begin{trgather}
-    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{fun}}_1 : \tau^{\text{in}}_1 \to \tau^{\text{out}}_1
+    \Gamma_1; \Gamma \vdash_1 e^{\text{fun}}_1 : \tau^{\text{in}}_1 \to \tau^{\text{out}}_1
     \vspace{0.5ex}
     \\
-    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{in}}_1 : \tau^{\text{in}}_1
+    \Gamma_1; \Gamma \vdash_1 e^{\text{in}}_1 : \tau^{\text{in}}_1
     \end{trgather}
   }
-  {\Gamma_1; \Gamma_0 \vdash_1 e^{\text{fun}}_1\;e^{\text{in}}_1 : \tau^{\text{out}}_1}
+  {\Gamma_1; \Gamma \vdash_1 e^{\text{fun}}_1\;e^{\text{in}}_1 : \tau^{\text{out}}_1}
 \vspace{3ex}
 \\
   &
@@ -207,35 +203,35 @@
   \trfrac
   {
     \begin{trgather}
-    \Gamma_1; \Gamma_0 \vdash_1 e_1 : \tau_1
+    \Gamma_1; \Gamma \vdash_1 e_1 : \tau_1
     \vspace{0.5ex}
     \\
-    \Gamma_1, x_1 : \tau_1; \Gamma_0 \vdash_0 e_0 : \tau_0
+    \Gamma_1, x_1 : \tau_1; \Gamma \vdash_0 e_0 : \tau
     \end{trgather}
   }
-  {\Gamma_1; \Gamma_0 \vdash_0 \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 : \tau_0}
+  {\Gamma_1; \Gamma \vdash_0 \text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 : \tau}
   &
   &
   \trfrac
   {
     \begin{trgather}
-    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{x}}_1 : \Diamond \tau_0
+    \Gamma_1; \Gamma \vdash_1 e^{\text{x}}_1 : \Diamond \tau
     \vspace{0.5ex}
     \\
-    \Gamma_1; \Gamma_0, x_0 : \tau_0 \vdash_1 e^{\text{body}}_1 : \tau_1
+    \Gamma_1; \Gamma, x : \tau \vdash_1 e^{\text{body}}_1 : \tau_1
     \end{trgather}
   }
-  {\Gamma_1; \Gamma_0 \vdash_1 \text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
+  {\Gamma_1; \Gamma \vdash_1 \text{let-dia}\;x = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
 \vspace{2ex}
 \\
   \trfrac
-  {\Gamma_1; \Gamma_0 \vdash_1 e_1 : \Diamond \tau_0}
-  {\Gamma_1; \Gamma_0 \vdash_0 \text{\$splice}\;e_1 : \tau_0}
+  {\Gamma_1; \Gamma \vdash_1 e_1 : \Diamond \tau}
+  {\Gamma_1; \Gamma \vdash_0 \text{\$splice}\;e_1 : \tau}
   &
   &
   \trfrac
-  {\Gamma_1; \Gamma_0 \vdash_0 e_0 : \tau_0}
-  {\Gamma_1; \Gamma_0 \vdash_1 \text{dia}(e_0) : \Diamond \tau_0}
+  {\Gamma_1; \Gamma \vdash_0 e_0 : \tau}
+  {\Gamma_1; \Gamma \vdash_1 \text{dia}(e_0) : \Diamond \tau}
 \end{array}
 \]
 
@@ -382,10 +378,10 @@
     e^{\text{x}}_1 \Downarrow_1 \text{dia}(e)
     \vspace{0.5ex}
     \\
-    e^{\text{body}}_1[x_0:=e] \Downarrow_1 v_1
+    e^{\text{body}}_1[x:=e] \Downarrow_1 v_1
     \end{trgather}
   }
-  {\text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 \Downarrow_1 v_1}
+  {\text{let-dia}\;x = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 \Downarrow_1 v_1}
 \vspace{2ex}
 \\
   &
@@ -417,11 +413,11 @@
 \\
   \trfrac
   {}
-  {x_0 \Downarrow_{\text{E}} x}
+  {x \Downarrow_{\text{E}} x}
   \hspace{2em} 
   \trfrac
   {e_0 \Downarrow_{\text{E}} e}
-  {\lambda x_0.\,e_0 \Downarrow_{\text{E}} \lambda x.\,e}
+  {\lambda x.\,e_0 \Downarrow_{\text{E}} \lambda x.\,e}
   &
   &
   \trfrac
@@ -537,8 +533,8 @@
   {\Delta; \Gamma_1 \vdash \text{box}(e) : \Box \tau}
   & \hspace{2em} &
   \trfrac
-  {\Gamma_1; \Gamma_0 \vdash_0 e_0 : \tau_0}
-  {\Gamma_1; \Gamma_0 \vdash_1 \text{dia}(e_0) : \Diamond \tau_0}
+  {\Gamma_1; \Gamma \vdash_0 e_0 : \tau}
+  {\Gamma_1; \Gamma \vdash_1 \text{dia}(e_0) : \Diamond \tau}
 \vspace{2ex}
 \\
   \trfrac
@@ -555,13 +551,13 @@
   \trfrac
   {
     \begin{trgather}
-    \Gamma_1; \Gamma_0 \vdash_1 e^{\text{x}}_1 : \Diamond \tau_0
+    \Gamma_1; \Gamma \vdash_1 e^{\text{x}}_1 : \Diamond \tau
     \vspace{0.5ex}
     \\
-    \Gamma_1; \Gamma_0, x_0 : \tau_0 \vdash_1 e^{\text{body}}_1 : \tau_1
+    \Gamma_1; \Gamma, x : \tau \vdash_1 e^{\text{body}}_1 : \tau_1
     \end{trgather}
   }
-  {\Gamma_1; \Gamma_0 \vdash_1 \text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
+  {\Gamma_1; \Gamma \vdash_1 \text{let-dia}\;x = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 : \tau_1}
 \end{array}
 \]
 

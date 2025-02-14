@@ -25,24 +25,24 @@ A variant of Pfenning and Davies's Staged Modal Calculus with Diamond instead of
 
 Here is a example program.
 ```
-(define (cube0 x0)
+(define (cube x)
   ($let-macro [(power1 n1)
                (case n1
                  [0
                   (dia 1)]
                  [1
-                  (dia x0)]
+                  (dia x)]
                  [_
-                  (let-dia [recur0 (power1 (- n1 1))]
-                    (dia (* x0 recur0)))])]
+                  (let-dia [recur (power1 (- n1 1))]
+                    (dia (* x recur)))])]
     ($splice (power1 3))))
 ```
 
 The variables
 ```
-cube0 :: Int -> Int
-x0 :: Int
-recur0 :: Int
+cube :: Int -> Int
+x :: Int
+recur :: Int
 ```
 all live in stage 0, while the variables
 ```
@@ -50,29 +50,28 @@ power1 :: Int -> Dia Int
 n1 :: Int
 ```
 live in stage 1. The stage-1 expression `(power1 3)` assembles the stage-0 code
-`(* x0 (* x0 x0))` (note the absence of administrative redexes), and `$splice`
+`(* x (* x x))` (note the absence of administrative redexes), and `$splice`
 inserts that code where `$splice` is called, thus resulting in the following
-fully-expanded program. By convention, the 0 suffixes are dropped once expansion
-is complete.
+fully-expanded program.
 ```
 (define (cube x)
   (* x (* x x)))
 ```
 
-Note how `(dia x0)` and `(dia (* x0 recur0))` refer to the variable `x0`,
-something which is not possible with `box`. This extra expressiveness comes with
-an extra obligation: we must ensure that this stage-0 code is only ever spliced
-in a context where `x0` is in scope. The calculus is carefully designed to
-guarantee this.
+Note how `(dia x)` and `(dia (* x recur))` refer to the variable `x`, something
+which is not possible with `box`. This extra expressiveness comes with an extra
+obligation: we must ensure that this stage-0 code is only ever spliced in a
+context where `x` is in scope. The calculus is carefully designed to guarantee
+this.
 
-In this case, the `x0` variable is in scope in the `dia` code fragments because
+In this case, the `x` variable is in scope in the `dia` code fragments because
 they are within a `$let-macro` expression which is itself in a context where
-`x0` is in scope. The code fragments can be moved around and assembled into
+`x` is in scope. The code fragments can be moved around and assembled into
 larger code fragments, but only within the `$let-macro`; there are no mutable
 variables or exceptions which would allow the code fragments to be smuggled to
-another part of the phase-1 code, outside the scope where `x0` is bound. The
+another part of the phase-1 code, outside the scope where `x` is bound. The
 only thing which can be done with those code fragments is to `$splice` them
-within the body of the `$let-macro`, where it is safe to do so because `x0` is
+within the body of the `$let-macro`, where it is safe to do so because `x` is
 in scope.
 
 ### Example 2
@@ -86,22 +85,22 @@ Here is a slight variant of the above example.
                [1
                 x1]
                [_
-                (let-dia [recur0 (power1 (- n1 1) x1)]
-                  (let-dia [x0 x1])
-                    (dia (* x0 recur0)))])]
-  (define (square0 x0)
-    ($splice (power1 2 (dia x0))))
-  (define (cube0 x0)
-    ($splice (power1 3 (dia x0)))))
+                (let-dia [recur (power1 (- n1 1) x1)]
+                  (let-dia [x x1])
+                    (dia (* x recur)))])]
+  (define (square x)
+    ($splice (power1 2 (dia x))))
+  (define (cube x)
+    ($splice (power1 3 (dia x)))))
 ```
 
 This time, thanks to its `x1 :: Dia Int` argument, `power1` receives a code
-fragment which refers to a variable `x0` which is _not_ in scope around the
+fragment which refers to a variable `x` which is _not_ in scope around the
 `$let-macro`. This is still safe because `power1` still cannot smuggle the code
-fragment anywhere, it can only return a code fragment which refers to `x0` to
-its call site, and this is fine since the variable `x0` is in scope at that call
+fragment anywhere, it can only return a code fragment which refers to `x` to
+its call site, and this is fine since the variable `x` is in scope at that call
 site. This time, it is `$splice` which acts as a boundary ensuring that
-`(dia x0)` cannot be spliced somewhere in which `x0` is not in scope.
+`(dia x)` cannot be spliced somewhere in which `x` is not in scope.
 
 [Here is what this example actually looks like](https://github.com/gelisam/staged-diamond-type-theory/blob/6772937056cd78966a8ebaedb6c41cd544273aed/src/toy.rkt#L1148-L1167) in the implementation.
 
