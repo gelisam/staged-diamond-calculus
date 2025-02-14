@@ -344,7 +344,7 @@
     e^{\text{in}} \Downarrow v^{\text{in}}
     \vspace{0.5ex}
     \\
-    e^{\text{out}}[v^{\text{in}}/x] \Downarrow v^{\text{out}}
+    e^{\text{out}}[x:=v^{\text{in}}] \Downarrow v^{\text{out}}
     \vspace{0.5ex}
     \end{trgather}
   }
@@ -358,7 +358,7 @@
     e^{\text{in}}_1 \Downarrow_1 v^{\text{in}}_1
     \vspace{0.5ex}
     \\
-    e^{\text{out}}_1[v^{\text{in}}_1/x_1] \Downarrow_1 v^{\text{out}}_1
+    e^{\text{out}}_1[x_1:=v^{\text{in}}_1] \Downarrow_1 v^{\text{out}}_1
     \vspace{0.5ex}
     \end{trgather}
   }
@@ -382,7 +382,7 @@
     e^{\text{x}}_1 \Downarrow_1 \text{dia}(e)
     \vspace{0.5ex}
     \\
-    e^{\text{body}}_1[e/x_0] \Downarrow_1 v_1
+    e^{\text{body}}_1[x_0:=e] \Downarrow_1 v_1
     \end{trgather}
   }
   {\text{let-dia}\;x_0 = e^{\text{x}}_1\,\text{in}\;e^{\text{body}}_1 \Downarrow_1 v_1}
@@ -442,7 +442,7 @@
   {
     e_1 \Downarrow_1 v_1
     \qquad
-    e_0[v_1/x_1] \Downarrow_{\text{E}} e
+    e_0[x_1:=v_1] \Downarrow_{\text{E}} e
   }
   {\text{\$let-macro}\;x_1 = e_1\,\text{in}\;e_0 \Downarrow_0 e}
   &
