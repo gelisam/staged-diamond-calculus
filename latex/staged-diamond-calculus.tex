@@ -149,8 +149,8 @@
 \vspace{2ex}
 \\
   \trfrac
-  {\Gamma_1; \Gamma, x : \tau^{\text{in}}_0 \vdash_0 e_0 : \tau^{\text{out}}_0}
-  {\Gamma_1; \Gamma \vdash_0 \lambda x.\,e_0 :\tau^{\text{in}}_0 \to \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma, x : \tau^{\text{in}} \vdash_0 e_0 : \tau^{\text{out}}}
+  {\Gamma_1; \Gamma \vdash_0 \lambda x.\,e_0 :\tau^{\text{in}} \to \tau^{\text{out}}}
   &
   \trfrac
   {\Gamma, x : \tau^{\text{in}} \vdash e : \tau^{\text{out}}}
@@ -164,13 +164,13 @@
   \trfrac
   {
     \begin{trgather}
-    \Gamma_1; \Gamma \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}}_0 \to \tau^{\text{out}}_0
+      \Gamma_1; \Gamma \vdash_0 e^{\text{fun}}_0 : \tau^{\text{in}} \to \tau^{\text{out}}
     \vspace{0.5ex}
     \\
-    \Gamma_1; \Gamma \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}_0
+      \Gamma_1; \Gamma \vdash_0 e^{\text{in}}_0 : \tau^{\text{in}}
     \end{trgather}
   }
-  {\Gamma_1; \Gamma \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}_0}
+  {\Gamma_1; \Gamma \vdash_0 e^{\text{fun}}_0\;e^{\text{in}}_0 : \tau^{\text{out}}}
   &
   \trfrac
   {
