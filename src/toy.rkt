@@ -1,11 +1,18 @@
 #lang racket
+(require (for-syntax racket/syntax))
 (require rackunit)
 (require data/union-find)
+
 
 ;;;;;;;;;;;;;
 ; utilities ;
 ;;;;;;;;;;;;;
 
+; (and-let* ([x e1] [y e2])
+;   (+ x y))
+; =>
+; (let* ([x e1] [y e2])
+;   (and x y (+ x y)))
 (define-syntax (and-let* stx)
   (syntax-case stx ()
     [(_ () body ...)
@@ -21,6 +28,42 @@
                 (+ x y))
               #f)
 
+; (get-symbols '([x e] e))
+; =>
+; '(x e e)
+(define-for-syntax (get-symbols datum)
+  (cond [(symbol? datum)
+        (list datum)]
+        [(null? datum)
+        '()]
+        [(pair? datum)
+        (append (get-symbols (car datum))
+                (get-symbols (cdr datum)))]
+        [else
+          (error 'get-symbols "unhandled datum [~v]" datum)]))
+
+; (my-struct (my-let [x e] e))
+; =>
+; (struct my-let (x1 e2 e3) #:transparent)
+(define-syntax (my-struct stx)
+  (syntax-case stx ()
+    [(_ (name arg ...))
+     (let* ([arg-list (get-symbols (syntax->datum #'(arg ...)))]
+            [iarg-list (for/list ([(arg i) (in-indexed arg-list)])
+                         (format-id #'name "~a~a" arg (+ i 1)))])
+       #`(struct name #,iarg-list #:transparent))]))
+
+; (my-struct* (foo e e) (bar) (baz e))
+; =>
+; (struct-n foo 2)
+; (struct-n bar 0)
+; (struct-n baz 1)
+(define-syntax (my-struct* stx)
+  (syntax-case stx ()
+    [(_ def ...)
+     #'(begin
+         (my-struct def) ...)]))
+
 
 ;;;;;;;;;;;;;;
 ; raw syntax ;
@@ -30,40 +73,43 @@
 ; eM ::= xM | \xM. eM | eM eM
 ;      | zero | succ | case-nat eM of {zero -> eM; succ xM -> eM}
 ;      | 'eU | let-diaM xU = eM in eM
-(struct mk-varM (xM) #:transparent)
-(struct mk-λM (xM bodyM) #:transparent)
-(struct mk-appM (funM argM) #:transparent)
-(struct mk-let-funM (funM maybe-tM xM defM bodyM) #:transparent)
-(struct mk-zeroM () #:transparent)
-(struct mk-succM () #:transparent)
-(struct mk-case-natM (scrutM zero-branchM succ-xM succ-branchM) #:transparent)
-(struct mk-quoteM (lowerU) #:transparent)
-(struct mk-let-diaM (xU maybe-tM defM bodyM) #:transparent)
+(my-struct*
+  (mk-varM xM)
+  (mk-λM (xM) eM)
+  (mk-appM eM eM)
+  (mk-let-funM [(eM tM? xM) eM] eM)
+  (mk-zeroM)
+  (mk-succM)
+  (mk-case-natM eM [#|zero|# eM] [(#|succ|# xM) eM])
+  (mk-quoteM eU)
+  (mk-let-diaM [xU tM? eM] eM))
 
 ; *U*nexpanded phase 0 terms with phase 1 terms inside of them
 ; eU ::= xU | \xU. eU | eU eU
 ;      | zero | succ | case-nat eU of {zero -> eU; succ xU -> eU}
 ;      | $eM | let-macroU xM = eM in eU
-(struct mk-varU (xU) #:transparent)
-(struct mk-λU (xU bodyU) #:transparent)
-(struct mk-appU (funU argU) #:transparent)
-(struct mk-let-funU (funU maybe-tZ xU defU bodyU) #:transparent)
-(struct mk-zeroU () #:transparent)
-(struct mk-succU () #:transparent)
-(struct mk-case-natU (scrutU zero-branchU succ-xU succ-branchU) #:transparent)
-(struct mk-spliceU (termM) #:transparent)
-(struct mk-let-macroU (xM maybe-tM defM bodyU) #:transparent)
+(my-struct*
+  (mk-varU xU)
+  (mk-λU (xU) eU)
+  (mk-appU eU eU)
+  (mk-let-funU [(eU tZ? xU) eU] eU)
+  (mk-zeroU)
+  (mk-succU)
+  (mk-case-natU eU [#|zero|# eU] [(#|succ|# xU) eU])
+  (mk-spliceU eM)
+  (mk-let-macroU [xM tM? eM] eU))
 
 ; *E*xpanded phase 0 terms, with no phase 1 terms
 ; eE ::= xE | \xE. eE | eE eE
 ;      | zero | succ | case-nat eE of {zero -> eE; succ x -> eE}
-(struct mk-varE (xE) #:transparent)
-(struct mk-λE (xE bodyE) #:transparent)
-(struct mk-appE (funE argE) #:transparent)
-(struct mk-let-funE (funE maybe-tZ xE defE bodyE) #:transparent)
-(struct mk-zeroE () #:transparent)
-(struct mk-succE () #:transparent)
-(struct mk-case-natE (scrutE zero-branchE succ-xE succ-branchE) #:transparent)
+(my-struct*
+  (mk-varE xE)
+  (mk-λE (xE) eE)
+  (mk-appE eE eE)
+  (mk-let-funE [(eE tZ? xE) eE] eE)
+  (mk-zeroE)
+  (mk-succE)
+  (mk-case-natE eE [#|zero|# eE] [(#|succ|# xE) eE]))
 
 
 ; phase 1 (*M*acro-level) types with phase 0 types inside of them
