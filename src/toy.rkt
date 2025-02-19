@@ -113,14 +113,16 @@
 
 ; phase 1 types with phase 0 types inside of them
 ; t1 ::= t1 -> t1 | Nat1 | Dia t
-(struct Arrow1 (in-t1 out-t1) #:transparent)
-(struct Nat1 () #:transparent)
-(struct Dia1 (lower-t) #:transparent)
+(my-struct*
+  (Arrow1 t1 t1)
+  (Nat1)
+  (Dia1 t))
 
 ; phase 0 types with no phase 1 types
 ; t ::= t -> t | Nat
-(struct Arrow (in-t out-t) #:transparent)
-(struct Nat () #:transparent)
+(my-struct*
+  (Arrow t t)
+  (Nat))
 
 
 ;;;;;;;;;;;;;;;;;;;
