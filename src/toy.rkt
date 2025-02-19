@@ -559,45 +559,45 @@
 ;
 ; x1 : t1 ∈ Δ
 ; ------
-; {Δ}; Γ ⊢ x1 : t1
+; Δ; Γ ⊢1 x1 : t1
 ;
-; {Δ, x1 : in-t1}; Γ ⊢ body1 : out-t1
+; Δ, x1 : in-t1; Γ ⊢1 body1 : out-t1
 ; ------
-; {Δ}; Γ ⊢ \x1. body1 : in-t1 -> out-t1
+; Δ; Γ ⊢1 \x1. body1 : in-t1 -> out-t1
 ;
-; {Δ}; Γ ⊢ fun1 : in-t1 -> out-t1
-; {Δ}; Γ ⊢ arg1 : in-t1
+; Δ; Γ ⊢1 fun1 : in-t1 -> out-t1
+; Δ; Γ ⊢1 arg1 : in-t1
 ; ------
-; {Δ}; Γ ⊢ fun1 arg1 : out-t1
+; Δ; Γ ⊢1 fun1 arg1 : out-t1
 ;
-; {Δ, fun1 : in-t1 -> out-t1, x1 : in-t1}; Γ ⊢ def1 : out-t1
-; {Δ, fun1 : in-t1 -> out-t1}; Γ ⊢ body1 : t1
+; Δ, fun1 : in-t1 -> out-t1, x1 : in-t1; Γ ⊢1 def1 : out-t1
+; Δ, fun1 : in-t1 -> out-t1; Γ ⊢1 body1 : t1
 ; ------
-; {Δ}; Γ ⊢ let-fun fun1 x1 = def1 in body1 : t1
-;
-; ------
-; {Δ}; Γ ⊢ zero : Nat
+; Δ; Γ ⊢1 let-fun fun1 x1 = def1 in body1 : t1
 ;
 ; ------
-; {Δ}; Γ ⊢ succ : Nat -> Nat
+; Δ; Γ ⊢1 zero : Nat1
 ;
-; {Δ}; Γ ⊢ scrut1 : Nat
-; {Δ}; Γ ⊢ zero-branch1 : t1
-; {Δ, succ-x1 : Nat}; Γ ⊢ succ-branch1 : t1
 ; ------
-; {Δ}; Γ ⊢ case-nat scrut1 of
-;            { zero -> zero-branch1
-;            ; succ succ-x1 -> succ-branch1
-;            } : t1
+; Δ; Γ ⊢1 succ : Nat1 -> Nat1
 ;
-; Δ; {Γ} ⊢ lower0 : inner-t
+; Δ; Γ ⊢1 scrut1 : Nat1
+; Δ; Γ ⊢1 zero-branch1 : t1
+; Δ, succ-x1 : Nat1; Γ ⊢1 succ-branch1 : t1
 ; ------
-; {Δ}; Γ ⊢ 'lower0 : Dia inner-t
+; Δ; Γ ⊢1 case-nat scrut1 of
+;           { zero -> zero-branch1
+;           ; succ succ-x1 -> succ-branch1
+;           } : t1
 ;
-; {Δ}; Γ ⊢ def1 : Dia lower-t
-; {Δ}; Γ, x0 : lower-t ⊢ body1 : t1
+; Δ; Γ ⊢0 lower0 : inner-t
 ; ------
-; {Δ}; Γ ⊢ let-dia1 x0 = def1 in body1 : t1
+; Δ; Γ ⊢1 'lower0 : Dia1 inner-t
+;
+; Δ; Γ ⊢1 def1 : Dia1 lower-t
+; Δ; Γ, x0 : lower-t ⊢1 body1 : t1
+; ------
+; Δ; Γ ⊢1 let-dia1 x0 = def1 in body1 : t1
 (define (check1 delta gamma ee1 tt1)
   (match ee1
     [(mk-var1 x1)
@@ -655,47 +655,47 @@
 
 ; typing rules for unexpanded phase 0 terms
 ;
-; x0 : t ∈ Δ
+; x0 : t ∈ Γ
 ; ------
-; Δ; {Γ} ⊢ x0 : t
+; Δ; Γ ⊢0 x0 : t
 ;
-; Δ; {Γ, x0 : in-t} ⊢ body0 : out-t
+; Δ; Γ, x0 : in-t ⊢0 body0 : out-t
 ; ------
-; Δ; {Γ} ⊢ \x0. body0 : in-t -> out-t
+; Δ; Γ ⊢0 \x0. body0 : in-t -> out-t
 ;
-; Δ; {Γ} ⊢ fun0 : in-t -> out-t
-; Δ; {Γ} ⊢ arg0 : in-t
+; Δ; Γ ⊢0 fun0 : in-t -> out-t
+; Δ; Γ ⊢0 arg0 : in-t
 ; ------
-; Δ; {Γ} ⊢ fun0 arg0 : out-t
+; Δ; Γ ⊢0 fun0 arg0 : out-t
 ;
-; Δ; {Γ, fun0 : in-t -> out-t, x0 : in-t0} ⊢ def0 : out-t
-; Δ; {Γ, fun0 : in-t -> out-t} ⊢ body0 : t
+; Δ; Γ, fun0 : in-t -> out-t, x0 : in-t0 ⊢0 def0 : out-t
+; Δ; Γ, fun0 : in-t -> out-t ⊢0 body0 : t
 ; ------
-; {Δ}; Γ ⊢ letfun fun0 x0 = def0 in body0 : t
-;
-; ------
-; Δ; {Γ} ⊢ zero : Nat
+; Δ; Γ ⊢0 letfun fun0 x0 = def0 in body0 : t
 ;
 ; ------
-; Δ; {Γ} ⊢ succ : Nat -> Nat
+; Δ; Γ ⊢0 zero : Nat
 ;
-; Δ; {Γ} ⊢ scrut0 : Nat
-; Δ; {Γ} ⊢ zero-branch0 : t
-; Δ; {Γ, succ-x0 : Nat} ⊢ succ-branch0 : t
 ; ------
-; Δ; {Γ} ⊢ case-nat scrut0 of
-;            { zero -> zero-branch0
-;            ; succ succ-x0 -> succ-branch0
-;            } : t
+; Δ; Γ ⊢0 succ : Nat -> Nat
 ;
-; {Δ}; Γ ⊢ higher1 : Dia lower-t
+; Δ; Γ ⊢0 scrut0 : Nat
+; Δ; Γ ⊢0 zero-branch0 : t
+; Δ; Γ, succ-x0 : Nat ⊢0 succ-branch0 : t
 ; ------
-; Δ; {Γ} ⊢ $higher1 : lower-t
+; Δ; Γ ⊢0 case-nat scrut0 of
+;           { zero -> zero-branch0
+;           ; succ succ-x0 -> succ-branch0
+;           } : t
 ;
-; {Δ}; Γ ⊢ def1 : x-t1
-; Δ, x1 : x-t1; {Γ} ⊢ body0 : t
+; Δ; Γ ⊢1 higher1 : Dia1 lower-t
 ; ------
-; Δ; {Γ} ⊢ let-macro0 x1 = def1 in body0 : t
+; Δ; Γ ⊢0 $higher1 : lower-t
+;
+; Δ; Γ ⊢1 def1 : x-t1
+; Δ, x1 : x-t1; Γ ⊢0 body0 : t
+; ------
+; Δ; Γ ⊢0 let-macro0 x1 = def1 in body0 : t
 (define (check0 delta gamma ee0 tt)
   (match ee0
     [(mk-var0 x0)
