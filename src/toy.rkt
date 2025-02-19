@@ -954,65 +954,65 @@
 
 ; big-steps semantics for phase 1 terms. note that
 ;
-;   E1; {σ} ⊢ e0 => e
+;   E1; σ ⊢ e0 =>E e
 ;
 ; is expansion, not evaluation, and that σ maps variables to expanded terms,
 ; not to values.
 ;
 ; x1 ↦ v1 ∈ E1
 ; ------
-; E1; σ ⊢ x1 => v1
+; E1; σ ⊢ x1 =>1 v1
 ;
 ; ------
-; E1; σ ⊢ \x1. body1 => clo E1 σ x1 body1
+; E1; σ ⊢ \x1. body1 =>1 clo E1 σ x1 body1
 ;
-; E1; σ ⊢ fun1 => clo clo-E1 σ x1 body1
-; E1; σ ⊢ arg1 => in1
-; clo-E1, x1 ↦ in1; clo-σ ⊢ body1 => out1
+; E1; σ ⊢ fun1 =>1 clo clo-E1 σ x1 body1
+; E1; σ ⊢ arg1 =>1 in1
+; clo-E1, x1 ↦ in1; clo-σ ⊢ body1 =>1 out1
 ; ------
-; E1; σ ⊢ fun1 arg2 => out1
+; E1; σ ⊢ fun1 arg2 =>1 out1
 ;
-; ext-E1@{E1, fun1 ↦ clo ext-E1 σ x1 def1}; σ ⊢ body1 => v1
+; ext-E1@{E1, fun1 ↦ clo ext-E1 σ x1 def1}; σ ⊢ body1 =>1 v1
 ; ------
-; E1; σ ⊢ let-fun fun1 x1 = def1 in body1 => v1
-;
-; ------
-; E1; σ ⊢ zero => zero
+; E1; σ ⊢ let-fun fun1 x1 = def1 in body1 =>1 v1
 ;
 ; ------
-; E1; σ ⊢ succ => succ
+; E1; σ ⊢ zero =>1 zero
 ;
-; E1; σ ⊢ fun1 => succ
-; E1; σ ⊢ arg1 => n1
 ; ------
-; E1; σ ⊢ fun1 arg2 => succ n1
+; E1; σ ⊢ succ =>1 succ
 ;
-; E1; σ ⊢ scrut1 => zero
-; E1; σ ⊢ zero-branch1 => v1
+; E1; σ ⊢ fun1 =>1 succ
+; E1; σ ⊢ arg1 =>1 n1
 ; ------
-; E1; σ ⊢ case-nat scrut1 of
-;           { zero -> zero-branch1
-;           ; succ succ-x1 -> succ-branch1
-;           }
-;      => v1
+; E1; σ ⊢ fun1 arg2 =>1 succ n1
 ;
-; E1; σ ⊢ scrut1 => succ n1
-; E1, succ-x1 ↦ n1; σ ⊢ succ-branch1 => v1
+; E1; σ ⊢ scrut1 =>1 zero
+; E1; σ ⊢ zero-branch1 =>1 v1
 ; ------
 ; E1; σ ⊢ case-nat scrut1 of
 ;           { zero -> zero-branch1
 ;           ; succ succ-x1 -> succ-branch1
 ;           }
-;      => v1
+;     =>1 v1
 ;
-; E1; {σ} ⊢ lower0 => lower
+; E1; σ ⊢ scrut1 =>1 succ n1
+; E1, succ-x1 ↦ n1; σ ⊢ succ-branch1 =>1 v1
 ; ------
-; E1; σ ⊢ 'lower0 => 'lower
+; E1; σ ⊢ case-nat scrut1 of
+;           { zero -> zero-branch1
+;           ; succ succ-x1 -> succ-branch1
+;           }
+;     =>1 v1
 ;
-; E1; σ ⊢ def1 => 'lower
-; E1; E, x0 ↦ lower ⊢ body1 => v1
+; E1; σ ⊢ lower0 =>E lower
 ; ------
-; E1; σ ⊢ let-dia1 x0 = def1 in body
+; E1; σ ⊢ 'lower0 =>1 'lower
+;
+; E1; σ ⊢ def1 =>1 'lower
+; E1; E, x0 ↦ lower ⊢ body1 =>1 v1
+; ------
+; E1; σ ⊢ let-dia1 x0 = def1 in body =>1 v1
 (struct clo-val1 (env1 sigma x1 body1) #:transparent)
 (struct succ-val1 () #:transparent)
 (struct nat-val1 (n) #:transparent)
@@ -1060,50 +1060,50 @@
 ;
 ; x0 ↦ e ∈ σ
 ; ------
-; E1; {σ} ⊢ x0 => e
+; E1; σ ⊢ x0 =>E e
 ;
-; E1; {σ, x0 ↦ x} ⊢ body0 => body
+; E1; σ, x0 ↦ x ⊢ body0 =>E body
 ; ------
-; E1; {σ} ⊢ \x0. body0 => \x. body
+; E1; σ ⊢ \x0. body0 =>E \x. body
 ;
-; E1; {σ} ⊢ fun0 => fun
-; E1; {σ} ⊢ arg0 => arg
+; E1; σ ⊢ fun0 =>E fun
+; E1; σ ⊢ arg0 =>E arg
 ; ------
-; E1; {σ} ⊢ fun0 arg0 => fun arg
+; E1; σ ⊢ fun0 arg0 =>E fun arg
 ;
-; E1; {σ, fun0 ↦ fun, x0 ↦ x} ⊢ def0 => def
-; E1; {σ, fun0 ↦ fun} ⊢ body0 => body
+; E1; σ, fun0 ↦ fun, x0 ↦ x ⊢ def0 =>E def
+; E1; σ, fun0 ↦ fun ⊢ body0 =>E body
 ; ------
-; E1; {σ} ⊢ let-fun fun0 x0 = def0 in body0
-;        => let-fun fun x = def in body
-;
-; ------
-; E1; {σ} ⊢ zero0 => zero
+; E1; σ ⊢ let-fun fun0 x0 = def0 in body0
+;        =>E let-fun fun x = def in body
 ;
 ; ------
-; E1; {σ} ⊢ succ0 => succ
+; E1; σ ⊢ zero0 =>E zero
 ;
-; E1; {σ} ⊢ scrut0 => scrut
-; E1; {σ} ⊢ zero-branch0 => zero-branch
-; E1; {σ, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
 ; ------
-; E1; {σ} ⊢ case-nat0 scrut0 of
-;             { zero -> zero-branch0
-;             ; succ succ-x0 -> succ-branch0
-;             }
-;        => case-nat scrut of
-;            { zero -> zero-branch
-;            ; succ succ-x -> succ-branch
-;            }
+; E1; σ ⊢ succ0 =>E succ
 ;
-; {E1}; σ ⊢ higher1 => 'lower
+; E1; σ ⊢ scrut0 =>E scrut
+; E1; σ ⊢ zero-branch0 =>E zero-branch
+; E1; σ, succ-x0 ↦ succ-x ⊢ succ-branch0 =>E succ-branch
 ; ------
-; E1; {σ} ⊢ $higher1 => lower
+; E1; σ ⊢ case-nat0 scrut0 of
+;           { zero -> zero-branch0
+;           ; succ succ-x0 -> succ-branch0
+;           }
+;     =>E case-nat scrut of
+;           { zero -> zero-branch
+;           ; succ succ-x -> succ-branch
+;           }
 ;
-; {E1}; σ ⊢ def1 => v1
-; E1, x0 ↦ v1; {σ} ⊢ body0 => body
+; E1; σ ⊢ higher1 =>1 'lower
 ; ------
-; E1; {σ} ⊢ let-macro1 x0 = def1 in body0 => body
+; E1; σ ⊢ $higher1 =>E lower
+;
+; E1; σ ⊢ def1 =>1 v1
+; E1, x0 ↦ v1; σ ⊢ body0 =>E body
+; ------
+; E1; σ ⊢ let-macro1 x0 = def1 in body0 =>E body
 (define (expand0 env1 sigma ee0)
   (match ee0
     [(mk-var0 x0)
