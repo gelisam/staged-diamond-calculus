@@ -557,75 +557,75 @@
 
 ; typing rules for phase 1 terms
 ;
-; x1 : t1 ∈ Δ
+; x1 : t1 ∈ Γ1
 ; ------
-; Δ; Γ ⊢1 x1 : t1
+; Γ1; Γ ⊢1 x1 : t1
 ;
-; Δ, x1 : in-t1; Γ ⊢1 body1 : out-t1
+; Γ1, x1 : in-t1; Γ ⊢1 body1 : out-t1
 ; ------
-; Δ; Γ ⊢1 \x1. body1 : in-t1 -> out-t1
+; Γ1; Γ ⊢1 \x1. body1 : in-t1 -> out-t1
 ;
-; Δ; Γ ⊢1 fun1 : in-t1 -> out-t1
-; Δ; Γ ⊢1 arg1 : in-t1
+; Γ1; Γ ⊢1 fun1 : in-t1 -> out-t1
+; Γ1; Γ ⊢1 arg1 : in-t1
 ; ------
-; Δ; Γ ⊢1 fun1 arg1 : out-t1
+; Γ1; Γ ⊢1 fun1 arg1 : out-t1
 ;
-; Δ, fun1 : in-t1 -> out-t1, x1 : in-t1; Γ ⊢1 def1 : out-t1
-; Δ, fun1 : in-t1 -> out-t1; Γ ⊢1 body1 : t1
+; Γ1, fun1 : in-t1 -> out-t1, x1 : in-t1; Γ ⊢1 def1 : out-t1
+; Γ1, fun1 : in-t1 -> out-t1; Γ ⊢1 body1 : t1
 ; ------
-; Δ; Γ ⊢1 let-fun fun1 x1 = def1 in body1 : t1
-;
-; ------
-; Δ; Γ ⊢1 zero : Nat1
+; Γ1; Γ ⊢1 let-fun fun1 x1 = def1 in body1 : t1
 ;
 ; ------
-; Δ; Γ ⊢1 succ : Nat1 -> Nat1
+; Γ1; Γ ⊢1 zero : Nat1
 ;
-; Δ; Γ ⊢1 scrut1 : Nat1
-; Δ; Γ ⊢1 zero-branch1 : t1
-; Δ, succ-x1 : Nat1; Γ ⊢1 succ-branch1 : t1
 ; ------
-; Δ; Γ ⊢1 case-nat scrut1 of
+; Γ1; Γ ⊢1 succ : Nat1 -> Nat1
+;
+; Γ1; Γ ⊢1 scrut1 : Nat1
+; Γ1; Γ ⊢1 zero-branch1 : t1
+; Γ1, succ-x1 : Nat1; Γ ⊢1 succ-branch1 : t1
+; ------
+; Γ1; Γ ⊢1 case-nat scrut1 of
 ;           { zero -> zero-branch1
 ;           ; succ succ-x1 -> succ-branch1
 ;           } : t1
 ;
-; Δ; Γ ⊢0 lower0 : inner-t
+; Γ1; Γ ⊢0 lower0 : inner-t
 ; ------
-; Δ; Γ ⊢1 'lower0 : Dia1 inner-t
+; Γ1; Γ ⊢1 'lower0 : Dia1 inner-t
 ;
-; Δ; Γ ⊢1 def1 : Dia1 lower-t
-; Δ; Γ, x0 : lower-t ⊢1 body1 : t1
+; Γ1; Γ ⊢1 def1 : Dia1 lower-t
+; Γ1; Γ, x0 : lower-t ⊢1 body1 : t1
 ; ------
-; Δ; Γ ⊢1 let-dia1 x0 = def1 in body1 : t1
-(define (check1 delta gamma ee1 tt1)
+; Γ1; Γ ⊢1 let-dia1 x0 = def1 in body1 : t1
+(define (check1 gamma1 gamma ee1 tt1)
   (match ee1
     [(mk-var1 x1)
-     (unify tt1 (hash-ref delta x1))]
+     (unify tt1 (hash-ref gamma1 x1))]
     [(mk-λ1 x1 body1)
      (define x-t1 (new-uf-set))
      (define out-t1 (new-uf-set))
-     (and (check1 (hash-set delta x1 x-t1) gamma
+     (and (check1 (hash-set gamma1 x1 x-t1) gamma
                   body1 out-t1)
           (unify tt1 (Arrow1 x-t1 out-t1)))]
     [(mk-app1 fun1 arg1)
      (define in-t1 (new-uf-set))
      (define out-t1 tt1)
-     (and (check1 delta gamma fun1 (Arrow1 in-t1 out-t1))
-          (check1 delta gamma arg1 in-t1)
+     (and (check1 gamma1 gamma fun1 (Arrow1 in-t1 out-t1))
+          (check1 gamma1 gamma arg1 in-t1)
           tt1)]
     [(mk-let-fun1 fun1 maybe-t1 x1 def1 body1)
      (define in-t1 (new-uf-set))
      (define out-t1 (new-uf-set))
      (and (when maybe-t1
             (unify maybe-t1 (Arrow1 in-t1 out-t1)))
-          (check1 (hash-set* delta
+          (check1 (hash-set* gamma1
                     fun1 (Arrow1 in-t1 out-t1)
                     x1 in-t1)
                   gamma
                   def1 out-t1)
           ; TODO: generalize
-          (check1 (hash-set delta
+          (check1 (hash-set gamma1
                     fun1 (Arrow1 in-t1 out-t1))
                   gamma
                   body1 tt1))]
@@ -634,20 +634,20 @@
     [(mk-succ1)
      (unify tt1 (Arrow1 (Nat1) (Nat1)))]
     [(mk-case-nat1 scrut1 zero-branch1 succ-x1 succ-branch1)
-     (and (check1 delta gamma scrut1 (Nat1))
-          (check1 delta gamma zero-branch1 tt1)
-          (check1 (hash-set delta succ-x1 (Nat1)) gamma
+     (and (check1 gamma1 gamma scrut1 (Nat1))
+          (check1 gamma1 gamma zero-branch1 tt1)
+          (check1 (hash-set gamma1 succ-x1 (Nat1)) gamma
                   succ-branch1 tt1))]
     [(mk-quote1 lower0)
      (define lower-t (new-uf-set))
-     (and (check0 delta gamma lower0 lower-t)
+     (and (check0 gamma1 gamma lower0 lower-t)
           (unify tt1 (Dia1 lower-t)))]
     [(mk-let-dia1 x0 maybe-t1 def1 body1)
      (define lower-t (new-uf-set))
      (and (when maybe-t1
             (unify maybe-t1 (Dia1 lower-t)))
-          (check1 delta gamma def1 (Dia1 lower-t))
-          (check1 delta (hash-set gamma x0 lower-t) body1 tt1))]))
+          (check1 gamma1 gamma def1 (Dia1 lower-t))
+          (check1 gamma1 (hash-set gamma x0 lower-t) body1 tt1))]))
 (define (infer1 ee1)
   (define tt1 (new-uf-set))
   (and (check1 (hash) (hash) ee1 tt1)
@@ -657,73 +657,73 @@
 ;
 ; x0 : t ∈ Γ
 ; ------
-; Δ; Γ ⊢0 x0 : t
+; Γ1; Γ ⊢0 x0 : t
 ;
-; Δ; Γ, x0 : in-t ⊢0 body0 : out-t
+; Γ1; Γ, x0 : in-t ⊢0 body0 : out-t
 ; ------
-; Δ; Γ ⊢0 \x0. body0 : in-t -> out-t
+; Γ1; Γ ⊢0 \x0. body0 : in-t -> out-t
 ;
-; Δ; Γ ⊢0 fun0 : in-t -> out-t
-; Δ; Γ ⊢0 arg0 : in-t
+; Γ1; Γ ⊢0 fun0 : in-t -> out-t
+; Γ1; Γ ⊢0 arg0 : in-t
 ; ------
-; Δ; Γ ⊢0 fun0 arg0 : out-t
+; Γ1; Γ ⊢0 fun0 arg0 : out-t
 ;
-; Δ; Γ, fun0 : in-t -> out-t, x0 : in-t0 ⊢0 def0 : out-t
-; Δ; Γ, fun0 : in-t -> out-t ⊢0 body0 : t
+; Γ1; Γ, fun0 : in-t -> out-t, x0 : in-t0 ⊢0 def0 : out-t
+; Γ1; Γ, fun0 : in-t -> out-t ⊢0 body0 : t
 ; ------
-; Δ; Γ ⊢0 letfun fun0 x0 = def0 in body0 : t
-;
-; ------
-; Δ; Γ ⊢0 zero : Nat
+; Γ1; Γ ⊢0 letfun fun0 x0 = def0 in body0 : t
 ;
 ; ------
-; Δ; Γ ⊢0 succ : Nat -> Nat
+; Γ1; Γ ⊢0 zero : Nat
 ;
-; Δ; Γ ⊢0 scrut0 : Nat
-; Δ; Γ ⊢0 zero-branch0 : t
-; Δ; Γ, succ-x0 : Nat ⊢0 succ-branch0 : t
 ; ------
-; Δ; Γ ⊢0 case-nat scrut0 of
+; Γ1; Γ ⊢0 succ : Nat -> Nat
+;
+; Γ1; Γ ⊢0 scrut0 : Nat
+; Γ1; Γ ⊢0 zero-branch0 : t
+; Γ1; Γ, succ-x0 : Nat ⊢0 succ-branch0 : t
+; ------
+; Γ1; Γ ⊢0 case-nat scrut0 of
 ;           { zero -> zero-branch0
 ;           ; succ succ-x0 -> succ-branch0
 ;           } : t
 ;
-; Δ; Γ ⊢1 higher1 : Dia1 lower-t
+; Γ1; Γ ⊢1 higher1 : Dia1 lower-t
 ; ------
-; Δ; Γ ⊢0 $higher1 : lower-t
+; Γ1; Γ ⊢0 $higher1 : lower-t
 ;
-; Δ; Γ ⊢1 def1 : x-t1
-; Δ, x1 : x-t1; Γ ⊢0 body0 : t
+; Γ1; Γ ⊢1 def1 : x-t1
+; Γ1, x1 : x-t1; Γ ⊢0 body0 : t
 ; ------
-; Δ; Γ ⊢0 let-macro0 x1 = def1 in body0 : t
-(define (check0 delta gamma ee0 tt)
+; Γ1; Γ ⊢0 let-macro0 x1 = def1 in body0 : t
+(define (check0 gamma1 gamma ee0 tt)
   (match ee0
     [(mk-var0 x0)
      (unify tt (hash-ref gamma x0))]
     [(mk-λ0 x0 body0)
      (define x-t (new-uf-set))
      (define out-t (new-uf-set))
-     (and (check0 delta (hash-set gamma x0 x-t)
+     (and (check0 gamma1 (hash-set gamma x0 x-t)
                   body0 out-t)
           (unify tt (Arrow x-t out-t)))]
     [(mk-app0 fun0 arg0)
      (define in-t (new-uf-set))
      (define out-t tt)
-     (and (check0 delta gamma fun0 (Arrow in-t out-t))
-          (check0 delta gamma arg0 in-t)
+     (and (check0 gamma1 gamma fun0 (Arrow in-t out-t))
+          (check0 gamma1 gamma arg0 in-t)
           tt)]
     [(mk-let-fun0 fun0 maybe-t x0 def0 body0)
      (define in-t (new-uf-set))
      (define out-t (new-uf-set))
      (and (when maybe-t
             (unify maybe-t (Arrow in-t out-t)))
-          (check0 delta
+          (check0 gamma1
                   (hash-set* gamma
                     fun0 (Arrow in-t out-t)
                     x0 in-t)
                   def0 out-t)
           ; TODO: generalize
-          (check0 delta
+          (check0 gamma1
                   (hash-set gamma
                     fun0 (Arrow in-t out-t))
                   body0 tt))]
@@ -732,19 +732,19 @@
     [(mk-succ0)
      (unify tt (Arrow (Nat) (Nat)))]
     [(mk-case-nat0 scrut0 zero-branch0 succ-x0 succ-branch0)
-     (and (check0 delta gamma scrut0 (Nat))
-          (check0 delta gamma zero-branch0 tt)
-          (check0 delta (hash-set gamma succ-x0 (Nat))
+     (and (check0 gamma1 gamma scrut0 (Nat))
+          (check0 gamma1 gamma zero-branch0 tt)
+          (check0 gamma1 (hash-set gamma succ-x0 (Nat))
                   succ-branch0 tt))]
     [(mk-splice0 higher1)
-     (and (check1 delta gamma higher1 (Dia1 tt))
+     (and (check1 gamma1 gamma higher1 (Dia1 tt))
           tt)]
     [(mk-let-macro0 x1 maybe-t1 def1 body0)
      (define def-t1 (new-uf-set))
      (and (when maybe-t1
             (unify maybe-t1 def-t1))
-          (check1 delta gamma def1 def-t1)
-          (check0 (hash-set delta x1 def-t1) gamma body0 tt))]))
+          (check1 gamma1 gamma def1 def-t1)
+          (check0 (hash-set gamma1 x1 def-t1) gamma body0 tt))]))
 (define (infer0 ee0)
   (define tt (new-uf-set))
   (and (check0 (hash) (hash) ee0 tt)
@@ -954,140 +954,140 @@
 
 ; big-steps semantics for phase 1 terms. note that
 ;
-;   Δ; {Γ̅} ⊢ e0 => e
+;   Γ1; {Γ̅} ⊢ e0 => e
 ;
 ; is expansion, not evaluation, and that Γ̅ maps variables to expanded terms,
 ; not to values.
 ;
-; x1 ↦ v1 ∈ Δ
+; x1 ↦ v1 ∈ Γ1
 ; ------
-; {Δ}; Γ̅ ⊢ x1 => v1
+; Γ1; Γ̅ ⊢ x1 => v1
 ;
 ; ------
-; {Δ}; Γ̅ ⊢ \x1. body1 => clo Δ Γ̅ x1 body1
+; Γ1; Γ̅ ⊢ \x1. body1 => clo Γ1 Γ̅ x1 body1
 ;
-; {Δ}; Γ̅ ⊢ fun1 => clo clo-Δ clo-Γ x1 body1
-; {Δ}; Γ̅ ⊢ arg1 => in1
-; {clo-Δ, x1 ↦ in1}; clo-Γ ⊢ body1 => out1
+; Γ1; Γ̅ ⊢ fun1 => clo clo-Γ1 Γ̅ x1 body1
+; Γ1; Γ̅ ⊢ arg1 => in1
+; clo-Γ1, x1 ↦ in1; clo-Γ̅ ⊢ body1 => out1
 ; ------
-; {Δ}; Γ̅ ⊢ fun1 arg2 => out1
+; Γ1; Γ̅ ⊢ fun1 arg2 => out1
 ;
-; ext-Δ@{Δ, fun1 ↦ clo ext-Δ Γ̅ x1 def1}; Γ̅ ⊢ body1 => v1
+; ext-Γ1@{Γ1, fun1 ↦ clo ext-Γ1 Γ̅ x1 def1}; Γ̅ ⊢ body1 => v1
 ; ------
-; {Δ}; Γ̅ ⊢ let-fun fun1 x1 = def1 in body1 => v1
-;
-; ------
-; {Δ}; Γ̅ ⊢ zero => zero
+; Γ1; Γ̅ ⊢ let-fun fun1 x1 = def1 in body1 => v1
 ;
 ; ------
-; {Δ}; Γ̅ ⊢ succ => succ
+; Γ1; Γ̅ ⊢ zero => zero
 ;
-; {Δ}; Γ̅ ⊢ fun1 => succ
-; {Δ}; Γ̅ ⊢ arg1 => n1
 ; ------
-; {Δ}; Γ̅ ⊢ fun1 arg2 => succ n1
+; Γ1; Γ̅ ⊢ succ => succ
 ;
-; {Δ}; Γ̅ ⊢ scrut1 => zero
-; {Δ}; Γ̅ ⊢ zero-branch1 => v1
+; Γ1; Γ̅ ⊢ fun1 => succ
+; Γ1; Γ̅ ⊢ arg1 => n1
 ; ------
-; {Δ}; Γ̅ ⊢ case-nat scrut1 of
-;            { zero -> zero-branch1
-;            ; succ succ-x1 -> succ-branch1
-;            }
-;       => v1
+; Γ1; Γ̅ ⊢ fun1 arg2 => succ n1
 ;
-; {Δ}; Γ̅ ⊢ scrut1 => succ n1
-; {Δ, succ-x1 ↦ n1}; Γ̅ ⊢ succ-branch1 => v1
+; Γ1; Γ̅ ⊢ scrut1 => zero
+; Γ1; Γ̅ ⊢ zero-branch1 => v1
 ; ------
-; {Δ}; Γ̅ ⊢ case-nat scrut1 of
-;            { zero -> zero-branch1
-;            ; succ succ-x1 -> succ-branch1
-;            }
-;       => v1
+; Γ1; Γ̅ ⊢ case-nat scrut1 of
+;           { zero -> zero-branch1
+;           ; succ succ-x1 -> succ-branch1
+;           }
+;      => v1
 ;
-; Δ; {Γ̅} ⊢ lower0 => lower
+; Γ1; Γ̅ ⊢ scrut1 => succ n1
+; Γ1, succ-x1 ↦ n1; Γ̅ ⊢ succ-branch1 => v1
 ; ------
-; {Δ}; Γ̅ ⊢ 'lower0 => 'lower
+; Γ1; Γ̅ ⊢ case-nat scrut1 of
+;           { zero -> zero-branch1
+;           ; succ succ-x1 -> succ-branch1
+;           }
+;      => v1
 ;
-; {Δ}; Γ̅ ⊢ def1 => 'lower
-; {Δ}; Γ, x0 ↦ lower ⊢ body1 => v1
+; Γ1; {Γ̅} ⊢ lower0 => lower
 ; ------
-; {Δ}; Γ̅̅ ⊢ let-dia1 x0 = def1 in body
-(struct clo-val1 (delta gamma-bar x1 body1) #:transparent)
+; Γ1; Γ̅ ⊢ 'lower0 => 'lower
+;
+; Γ1; Γ̅ ⊢ def1 => 'lower
+; Γ1; Γ, x0 ↦ lower ⊢ body1 => v1
+; ------
+; Γ1; Γ̅ ⊢ let-dia1 x0 = def1 in body
+(struct clo-val1 (gamma1 gamma-bar x1 body1) #:transparent)
 (struct succ-val1 () #:transparent)
 (struct nat-val1 (n) #:transparent)
 (struct quoted-val1 (expr) #:transparent)
-(define (eval1 delta gamma-bar ee1)
+(define (eval1 gamma1 gamma-bar ee1)
   (match ee1
     [(mk-var1 x1)
-     ((hash-ref delta x1))]
+     ((hash-ref gamma1 x1))]
     [(mk-λ1 x1 body1)
-     (clo-val1 delta gamma-bar x1 body1)]
+     (clo-val1 gamma1 gamma-bar x1 body1)]
     [(mk-app1 fun1 arg1)
-     (match (eval1 delta gamma-bar fun1)
-       [(clo-val1 clo-delta clo-gamma-bar x1 body1)
-        (define in1 (eval1 delta gamma-bar arg1))
-        (eval1 (hash-set clo-delta x1 (lambda () in1)) clo-gamma-bar body1)]
+     (match (eval1 gamma1 gamma-bar fun1)
+       [(clo-val1 clo-gamma1 clo-gamma-bar x1 body1)
+        (define in1 (eval1 gamma1 gamma-bar arg1))
+        (eval1 (hash-set clo-gamma1 x1 (lambda () in1)) clo-gamma-bar body1)]
        [(succ-val1)
-        (match (eval1 delta gamma-bar arg1)
+        (match (eval1 gamma1 gamma-bar arg1)
           [(nat-val1 in1)
            (nat-val1 (+ in1 1))])])]
     [(mk-let-fun1 fun1 _maybe-t1 x1 def1 body1)
      (define (mk-fun)
-       (clo-val1 (hash-set delta fun1 mk-fun) gamma-bar x1 def1))
-     (eval1 (hash-set delta fun1 mk-fun) gamma-bar body1)]
+       (clo-val1 (hash-set gamma1 fun1 mk-fun) gamma-bar x1 def1))
+     (eval1 (hash-set gamma1 fun1 mk-fun) gamma-bar body1)]
     [(mk-zero1)
      (nat-val1 0)]
     [(mk-succ1)
      (succ-val1)]
     [(mk-case-nat1 scrut1 zero-branch1 succ-x1 succ-branch1)
-     (match (eval1 delta gamma-bar scrut1)
+     (match (eval1 gamma1 gamma-bar scrut1)
        [(nat-val1 0)
-        (eval1 delta gamma-bar zero-branch1)]
+        (eval1 gamma1 gamma-bar zero-branch1)]
        [(nat-val1 n)
         (define x (nat-val1 (- n 1)))
-        (eval1 (hash-set delta succ-x1 (lambda () x)) gamma-bar succ-branch1)])]
+        (eval1 (hash-set gamma1 succ-x1 (lambda () x)) gamma-bar succ-branch1)])]
     [(mk-quote1 lower0)
-     (quoted-val1 (expand0 delta gamma-bar lower0))]
+     (quoted-val1 (expand0 gamma1 gamma-bar lower0))]
     [(mk-let-dia1 x0 _maybe-t1 def1 body1)
-     (match (eval1 delta gamma-bar def1)
+     (match (eval1 gamma1 gamma-bar def1)
        [(quoted-val1 lower)
-        (eval1 delta (hash-set gamma-bar x0 lower) body1)])]))
+        (eval1 gamma1 (hash-set gamma-bar x0 lower) body1)])]))
 (define (eval-closed1 ee1)
   (eval1 (hash) (hash) ee1))
 
 ; big-steps semantics for expanding unexpanded phase 0 terms
 ;
-; x0 ↦ e ∈ Γ̅̅
+; x0 ↦ e ∈ Γ̅
 ; ------
-; Δ; {Γ̅} ⊢ x0 => e
+; Γ1; {Γ̅} ⊢ x0 => e
 ;
-; Δ; {Γ̅, x0 ↦ x} ⊢ body0 => body
+; Γ1; {Γ̅, x0 ↦ x} ⊢ body0 => body
 ; ------
-; Δ; {Γ̅} ⊢ \x0. body0 => \x. body
+; Γ1; {Γ̅} ⊢ \x0. body0 => \x. body
 ;
-; Δ; {Γ̅} ⊢ fun0 => fun
-; Δ; {Γ̅} ⊢ arg0 => arg
+; Γ1; {Γ̅} ⊢ fun0 => fun
+; Γ1; {Γ̅} ⊢ arg0 => arg
 ; ------
-; Δ; {Γ̅} ⊢ fun0 arg0 => fun arg
+; Γ1; {Γ̅} ⊢ fun0 arg0 => fun arg
 ;
-; Δ; {Γ̅, fun0 ↦ fun, x0 ↦ x} ⊢ def0 => def
-; Δ; {Γ̅, fun0 ↦ fun} ⊢ body0 => body
+; Γ1; {Γ̅, fun0 ↦ fun, x0 ↦ x} ⊢ def0 => def
+; Γ1; {Γ̅, fun0 ↦ fun} ⊢ body0 => body
 ; ------
-; Δ; {Γ̅} ⊢ let-fun fun0 x0 = def0 in body0
+; Γ1; {Γ̅} ⊢ let-fun fun0 x0 = def0 in body0
 ;       => let-fun fun x = def in body
 ;
 ; ------
-; Δ; {Γ̅} ⊢ zero0 => zero
+; Γ1; {Γ̅} ⊢ zero0 => zero
 ;
 ; ------
-; Δ; {Γ̅} ⊢ succ0 => succ
+; Γ1; {Γ̅} ⊢ succ0 => succ
 ;
-; Δ; {Γ̅} ⊢ scrut0 => scrut
-; Δ; {Γ̅} ⊢ zero-branch0 => zero-branch
-; Δ; {Γ̅, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
+; Γ1; {Γ̅} ⊢ scrut0 => scrut
+; Γ1; {Γ̅} ⊢ zero-branch0 => zero-branch
+; Γ1; {Γ̅, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
 ; ------
-; Δ; {Γ̅} ⊢ case-nat0 scrut0 of
+; Γ1; {Γ̅} ⊢ case-nat0 scrut0 of
 ;            { zero -> zero-branch0
 ;            ; succ succ-x0 -> succ-branch0
 ;            }
@@ -1096,33 +1096,33 @@
 ;           ; succ succ-x -> succ-branch
 ;           }
 ;
-; {Δ}; Γ̅ ⊢ higher1 => 'lower
+; {Γ1}; Γ̅ ⊢ higher1 => 'lower
 ; ------
-; Δ; {Γ̅} ⊢ $higher1 => lower
+; Γ1; {Γ̅} ⊢ $higher1 => lower
 ;
-; {Δ}; Γ̅ ⊢ def1 => v1
-; Δ, x0 ↦ v1; {Γ̅} ⊢ body0 => body
+; {Γ1}; Γ̅ ⊢ def1 => v1
+; Γ1, x0 ↦ v1; {Γ̅} ⊢ body0 => body
 ; ------
-; Δ; {Γ̅} ⊢ let-macro1 x0 = def1 in body0 => body
-(define (expand0 delta gamma-bar ee0)
+; Γ1; {Γ̅} ⊢ let-macro1 x0 = def1 in body0 => body
+(define (expand0 gamma1 gamma-bar ee0)
   (match ee0
     [(mk-var0 x0)
      (hash-ref gamma-bar x0)]
     [(mk-λ0 x0 body0)
-     (define body (expand0 delta (hash-set gamma-bar
+     (define body (expand0 gamma1 (hash-set gamma-bar
                                     x0 (mk-var x0))
                             body0))
      (mk-λ x0 body)]
     [(mk-app0 fun0 arg0)
-     (define fun (expand0 delta gamma-bar fun0))
-     (define arg (expand0 delta gamma-bar arg0))
+     (define fun (expand0 gamma1 gamma-bar fun0))
+     (define arg (expand0 gamma1 gamma-bar arg0))
      (mk-app fun arg)]
     [(mk-let-fun0 fun0 maybe-t x0 def0 body0)
-     (define def (expand0 delta (hash-set* gamma-bar
+     (define def (expand0 gamma1 (hash-set* gamma-bar
                                    fun0 (mk-var fun0)
                                    x0 (mk-var x0))
                            def0))
-     (define body (expand0 delta (hash-set gamma-bar
+     (define body (expand0 gamma1 (hash-set gamma-bar
                                     fun0 (mk-var fun0))
                             body0))
      (mk-let-fun fun0 maybe-t x0 def body)]
@@ -1131,19 +1131,19 @@
     [(mk-succ0)
      (mk-succ)]
     [(mk-case-nat0 scrut0 zero-branch0 succ-x0 succ-branch0)
-     (define scrut (expand0 delta gamma-bar scrut0))
-     (define zero-branch (expand0 delta gamma-bar zero-branch0))
-     (define succ-branch (expand0 delta (hash-set gamma-bar
+     (define scrut (expand0 gamma1 gamma-bar scrut0))
+     (define zero-branch (expand0 gamma1 gamma-bar zero-branch0))
+     (define succ-branch (expand0 gamma1 (hash-set gamma-bar
                                            succ-x0 (mk-var succ-x0))
                                    succ-branch0))
      (mk-case-nat scrut zero-branch succ-x0 succ-branch)]
     [(mk-splice0 higher1)
-     (match (eval1 delta gamma-bar higher1)
+     (match (eval1 gamma1 gamma-bar higher1)
        [(quoted-val1 lower)
         lower])]
     [(mk-let-macro0 x0 _maybe-t1 def1 body0)
-     (define v1 (eval1 delta gamma-bar def1))
-     (expand0 (hash-set delta x0 (lambda () v1)) gamma-bar
+     (define v1 (eval1 gamma1 gamma-bar def1))
+     (expand0 (hash-set gamma1 x0 (lambda () v1)) gamma-bar
               body0)]))
 (define (expand-closed0 ee0)
   (expand0 (hash) (hash) ee0))
