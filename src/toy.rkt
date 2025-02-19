@@ -1075,7 +1075,7 @@
 ; Γ1; {σ, fun0 ↦ fun} ⊢ body0 => body
 ; ------
 ; Γ1; {σ} ⊢ let-fun fun0 x0 = def0 in body0
-;       => let-fun fun x = def in body
+;        => let-fun fun x = def in body
 ;
 ; ------
 ; Γ1; {σ} ⊢ zero0 => zero
@@ -1088,13 +1088,13 @@
 ; Γ1; {σ, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
 ; ------
 ; Γ1; {σ} ⊢ case-nat0 scrut0 of
-;            { zero -> zero-branch0
-;            ; succ succ-x0 -> succ-branch0
+;             { zero -> zero-branch0
+;             ; succ succ-x0 -> succ-branch0
+;             }
+;        => case-nat scrut of
+;            { zero -> zero-branch
+;            ; succ succ-x -> succ-branch
 ;            }
-;       => case-nat scrut of
-;           { zero -> zero-branch
-;           ; succ succ-x -> succ-branch
-;           }
 ;
 ; {Γ1}; σ ⊢ higher1 => 'lower
 ; ------
@@ -1271,7 +1271,7 @@
 ;       { zero -> zero-branch
 ;       ; succ succ-x -> succ-branch
 ;       }
-;     => v
+;  => v
 ;
 ; Γ ⊢ scrut => succ n
 ; Γ, succ-x ↦ n ⊢ succ-branch => v
