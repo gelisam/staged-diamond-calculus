@@ -954,105 +954,105 @@
 
 ; big-steps semantics for phase 1 terms. note that
 ;
-;   Γ1; {σ} ⊢ e0 => e
+;   E1; {σ} ⊢ e0 => e
 ;
 ; is expansion, not evaluation, and that σ maps variables to expanded terms,
 ; not to values.
 ;
-; x1 ↦ v1 ∈ Γ1
+; x1 ↦ v1 ∈ E1
 ; ------
-; Γ1; σ ⊢ x1 => v1
+; E1; σ ⊢ x1 => v1
 ;
 ; ------
-; Γ1; σ ⊢ \x1. body1 => clo Γ1 σ x1 body1
+; E1; σ ⊢ \x1. body1 => clo E1 σ x1 body1
 ;
-; Γ1; σ ⊢ fun1 => clo clo-Γ1 σ x1 body1
-; Γ1; σ ⊢ arg1 => in1
-; clo-Γ1, x1 ↦ in1; clo-σ ⊢ body1 => out1
+; E1; σ ⊢ fun1 => clo clo-E1 σ x1 body1
+; E1; σ ⊢ arg1 => in1
+; clo-E1, x1 ↦ in1; clo-σ ⊢ body1 => out1
 ; ------
-; Γ1; σ ⊢ fun1 arg2 => out1
+; E1; σ ⊢ fun1 arg2 => out1
 ;
-; ext-Γ1@{Γ1, fun1 ↦ clo ext-Γ1 σ x1 def1}; σ ⊢ body1 => v1
+; ext-E1@{E1, fun1 ↦ clo ext-E1 σ x1 def1}; σ ⊢ body1 => v1
 ; ------
-; Γ1; σ ⊢ let-fun fun1 x1 = def1 in body1 => v1
-;
-; ------
-; Γ1; σ ⊢ zero => zero
+; E1; σ ⊢ let-fun fun1 x1 = def1 in body1 => v1
 ;
 ; ------
-; Γ1; σ ⊢ succ => succ
+; E1; σ ⊢ zero => zero
 ;
-; Γ1; σ ⊢ fun1 => succ
-; Γ1; σ ⊢ arg1 => n1
 ; ------
-; Γ1; σ ⊢ fun1 arg2 => succ n1
+; E1; σ ⊢ succ => succ
 ;
-; Γ1; σ ⊢ scrut1 => zero
-; Γ1; σ ⊢ zero-branch1 => v1
+; E1; σ ⊢ fun1 => succ
+; E1; σ ⊢ arg1 => n1
 ; ------
-; Γ1; σ ⊢ case-nat scrut1 of
+; E1; σ ⊢ fun1 arg2 => succ n1
+;
+; E1; σ ⊢ scrut1 => zero
+; E1; σ ⊢ zero-branch1 => v1
+; ------
+; E1; σ ⊢ case-nat scrut1 of
 ;           { zero -> zero-branch1
 ;           ; succ succ-x1 -> succ-branch1
 ;           }
 ;      => v1
 ;
-; Γ1; σ ⊢ scrut1 => succ n1
-; Γ1, succ-x1 ↦ n1; σ ⊢ succ-branch1 => v1
+; E1; σ ⊢ scrut1 => succ n1
+; E1, succ-x1 ↦ n1; σ ⊢ succ-branch1 => v1
 ; ------
-; Γ1; σ ⊢ case-nat scrut1 of
+; E1; σ ⊢ case-nat scrut1 of
 ;           { zero -> zero-branch1
 ;           ; succ succ-x1 -> succ-branch1
 ;           }
 ;      => v1
 ;
-; Γ1; {σ} ⊢ lower0 => lower
+; E1; {σ} ⊢ lower0 => lower
 ; ------
-; Γ1; σ ⊢ 'lower0 => 'lower
+; E1; σ ⊢ 'lower0 => 'lower
 ;
-; Γ1; σ ⊢ def1 => 'lower
-; Γ1; Γ, x0 ↦ lower ⊢ body1 => v1
+; E1; σ ⊢ def1 => 'lower
+; E1; E, x0 ↦ lower ⊢ body1 => v1
 ; ------
-; Γ1; σ ⊢ let-dia1 x0 = def1 in body
-(struct clo-val1 (gamma1 sigma x1 body1) #:transparent)
+; E1; σ ⊢ let-dia1 x0 = def1 in body
+(struct clo-val1 (env1 sigma x1 body1) #:transparent)
 (struct succ-val1 () #:transparent)
 (struct nat-val1 (n) #:transparent)
 (struct quoted-val1 (expr) #:transparent)
-(define (eval1 gamma1 sigma ee1)
+(define (eval1 env1 sigma ee1)
   (match ee1
     [(mk-var1 x1)
-     ((hash-ref gamma1 x1))]
+     ((hash-ref env1 x1))]
     [(mk-λ1 x1 body1)
-     (clo-val1 gamma1 sigma x1 body1)]
+     (clo-val1 env1 sigma x1 body1)]
     [(mk-app1 fun1 arg1)
-     (match (eval1 gamma1 sigma fun1)
-       [(clo-val1 clo-gamma1 clo-sigma x1 body1)
-        (define in1 (eval1 gamma1 sigma arg1))
-        (eval1 (hash-set clo-gamma1 x1 (lambda () in1)) clo-sigma body1)]
+     (match (eval1 env1 sigma fun1)
+       [(clo-val1 clo-env1 clo-sigma x1 body1)
+        (define in1 (eval1 env1 sigma arg1))
+        (eval1 (hash-set clo-env1 x1 (lambda () in1)) clo-sigma body1)]
        [(succ-val1)
-        (match (eval1 gamma1 sigma arg1)
+        (match (eval1 env1 sigma arg1)
           [(nat-val1 in1)
            (nat-val1 (+ in1 1))])])]
     [(mk-let-fun1 fun1 _maybe-t1 x1 def1 body1)
      (define (mk-fun)
-       (clo-val1 (hash-set gamma1 fun1 mk-fun) sigma x1 def1))
-     (eval1 (hash-set gamma1 fun1 mk-fun) sigma body1)]
+       (clo-val1 (hash-set env1 fun1 mk-fun) sigma x1 def1))
+     (eval1 (hash-set env1 fun1 mk-fun) sigma body1)]
     [(mk-zero1)
      (nat-val1 0)]
     [(mk-succ1)
      (succ-val1)]
     [(mk-case-nat1 scrut1 zero-branch1 succ-x1 succ-branch1)
-     (match (eval1 gamma1 sigma scrut1)
+     (match (eval1 env1 sigma scrut1)
        [(nat-val1 0)
-        (eval1 gamma1 sigma zero-branch1)]
+        (eval1 env1 sigma zero-branch1)]
        [(nat-val1 n)
         (define x (nat-val1 (- n 1)))
-        (eval1 (hash-set gamma1 succ-x1 (lambda () x)) sigma succ-branch1)])]
+        (eval1 (hash-set env1 succ-x1 (lambda () x)) sigma succ-branch1)])]
     [(mk-quote1 lower0)
-     (quoted-val1 (expand0 gamma1 sigma lower0))]
+     (quoted-val1 (expand0 env1 sigma lower0))]
     [(mk-let-dia1 x0 _maybe-t1 def1 body1)
-     (match (eval1 gamma1 sigma def1)
+     (match (eval1 env1 sigma def1)
        [(quoted-val1 lower)
-        (eval1 gamma1 (hash-set sigma x0 lower) body1)])]))
+        (eval1 env1 (hash-set sigma x0 lower) body1)])]))
 (define (eval-closed1 ee1)
   (eval1 (hash) (hash) ee1))
 
@@ -1060,34 +1060,34 @@
 ;
 ; x0 ↦ e ∈ σ
 ; ------
-; Γ1; {σ} ⊢ x0 => e
+; E1; {σ} ⊢ x0 => e
 ;
-; Γ1; {σ, x0 ↦ x} ⊢ body0 => body
+; E1; {σ, x0 ↦ x} ⊢ body0 => body
 ; ------
-; Γ1; {σ} ⊢ \x0. body0 => \x. body
+; E1; {σ} ⊢ \x0. body0 => \x. body
 ;
-; Γ1; {σ} ⊢ fun0 => fun
-; Γ1; {σ} ⊢ arg0 => arg
+; E1; {σ} ⊢ fun0 => fun
+; E1; {σ} ⊢ arg0 => arg
 ; ------
-; Γ1; {σ} ⊢ fun0 arg0 => fun arg
+; E1; {σ} ⊢ fun0 arg0 => fun arg
 ;
-; Γ1; {σ, fun0 ↦ fun, x0 ↦ x} ⊢ def0 => def
-; Γ1; {σ, fun0 ↦ fun} ⊢ body0 => body
+; E1; {σ, fun0 ↦ fun, x0 ↦ x} ⊢ def0 => def
+; E1; {σ, fun0 ↦ fun} ⊢ body0 => body
 ; ------
-; Γ1; {σ} ⊢ let-fun fun0 x0 = def0 in body0
+; E1; {σ} ⊢ let-fun fun0 x0 = def0 in body0
 ;        => let-fun fun x = def in body
 ;
 ; ------
-; Γ1; {σ} ⊢ zero0 => zero
+; E1; {σ} ⊢ zero0 => zero
 ;
 ; ------
-; Γ1; {σ} ⊢ succ0 => succ
+; E1; {σ} ⊢ succ0 => succ
 ;
-; Γ1; {σ} ⊢ scrut0 => scrut
-; Γ1; {σ} ⊢ zero-branch0 => zero-branch
-; Γ1; {σ, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
+; E1; {σ} ⊢ scrut0 => scrut
+; E1; {σ} ⊢ zero-branch0 => zero-branch
+; E1; {σ, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
 ; ------
-; Γ1; {σ} ⊢ case-nat0 scrut0 of
+; E1; {σ} ⊢ case-nat0 scrut0 of
 ;             { zero -> zero-branch0
 ;             ; succ succ-x0 -> succ-branch0
 ;             }
@@ -1096,33 +1096,33 @@
 ;            ; succ succ-x -> succ-branch
 ;            }
 ;
-; {Γ1}; σ ⊢ higher1 => 'lower
+; {E1}; σ ⊢ higher1 => 'lower
 ; ------
-; Γ1; {σ} ⊢ $higher1 => lower
+; E1; {σ} ⊢ $higher1 => lower
 ;
-; {Γ1}; σ ⊢ def1 => v1
-; Γ1, x0 ↦ v1; {σ} ⊢ body0 => body
+; {E1}; σ ⊢ def1 => v1
+; E1, x0 ↦ v1; {σ} ⊢ body0 => body
 ; ------
-; Γ1; {σ} ⊢ let-macro1 x0 = def1 in body0 => body
-(define (expand0 gamma1 sigma ee0)
+; E1; {σ} ⊢ let-macro1 x0 = def1 in body0 => body
+(define (expand0 env1 sigma ee0)
   (match ee0
     [(mk-var0 x0)
      (hash-ref sigma x0)]
     [(mk-λ0 x0 body0)
-     (define body (expand0 gamma1 (hash-set sigma
+     (define body (expand0 env1 (hash-set sigma
                                     x0 (mk-var x0))
                             body0))
      (mk-λ x0 body)]
     [(mk-app0 fun0 arg0)
-     (define fun (expand0 gamma1 sigma fun0))
-     (define arg (expand0 gamma1 sigma arg0))
+     (define fun (expand0 env1 sigma fun0))
+     (define arg (expand0 env1 sigma arg0))
      (mk-app fun arg)]
     [(mk-let-fun0 fun0 maybe-t x0 def0 body0)
-     (define def (expand0 gamma1 (hash-set* sigma
+     (define def (expand0 env1 (hash-set* sigma
                                    fun0 (mk-var fun0)
                                    x0 (mk-var x0))
                            def0))
-     (define body (expand0 gamma1 (hash-set sigma
+     (define body (expand0 env1 (hash-set sigma
                                     fun0 (mk-var fun0))
                             body0))
      (mk-let-fun fun0 maybe-t x0 def body)]
@@ -1131,19 +1131,19 @@
     [(mk-succ0)
      (mk-succ)]
     [(mk-case-nat0 scrut0 zero-branch0 succ-x0 succ-branch0)
-     (define scrut (expand0 gamma1 sigma scrut0))
-     (define zero-branch (expand0 gamma1 sigma zero-branch0))
-     (define succ-branch (expand0 gamma1 (hash-set sigma
+     (define scrut (expand0 env1 sigma scrut0))
+     (define zero-branch (expand0 env1 sigma zero-branch0))
+     (define succ-branch (expand0 env1 (hash-set sigma
                                            succ-x0 (mk-var succ-x0))
                                    succ-branch0))
      (mk-case-nat scrut zero-branch succ-x0 succ-branch)]
     [(mk-splice0 higher1)
-     (match (eval1 gamma1 sigma higher1)
+     (match (eval1 env1 sigma higher1)
        [(quoted-val1 lower)
         lower])]
     [(mk-let-macro0 x0 _maybe-t1 def1 body0)
-     (define v1 (eval1 gamma1 sigma def1))
-     (expand0 (hash-set gamma1 x0 (lambda () v1)) sigma
+     (define v1 (eval1 env1 sigma def1))
+     (expand0 (hash-set env1 x0 (lambda () v1)) sigma
               body0)]))
 (define (expand-closed0 ee0)
   (expand0 (hash) (hash) ee0))
@@ -1236,84 +1236,84 @@
 
 ; big steps semantics for expanded phase 0 terms
 ;
-; x ↦ v ∈ Γ
+; x ↦ v ∈ E
 ; ------
-; Γ ⊢ x => v
+; E ⊢ x => v
 ;
 ; ------
-; Γ ⊢ \x. body => clo Γ x body
+; E ⊢ \x. body => clo E x body
 ;
-; Γ ⊢ fun => clo clo-Γ x def
-; Γ ⊢ arg => in
-; clo-Γ, x ↦ in ⊢ body => out
+; E ⊢ fun => clo clo-E x def
+; E ⊢ arg => in
+; clo-E, x ↦ in ⊢ body => out
 ; ------
-; Γ ⊢ fun arg => out
+; E ⊢ fun arg => out
 ;
-; ext-Γ@(Γ, fun ↦ clo ext-Γ x def); Γ ⊢ body => v
+; ext-E@(E, fun ↦ clo ext-E x def); E ⊢ body => v
 ; ------
-; Γ ⊢ let-fun fun x = def in body => v
-;
-; ------
-; Γ ⊢ zero => zero
+; E ⊢ let-fun fun x = def in body => v
 ;
 ; ------
-; Γ ⊢ succ => succ
+; E ⊢ zero => zero
 ;
-; Γ ⊢ fun => succ
-; Γ ⊢ arg => n
 ; ------
-; Γ ⊢ fun arg => succ n
+; E ⊢ succ => succ
 ;
-; Γ ⊢ scrut => zero
-; Γ ⊢ zero-branch => v
+; E ⊢ fun => succ
+; E ⊢ arg => n
 ; ------
-; Γ ⊢ case-nat scrut of
+; E ⊢ fun arg => succ n
+;
+; E ⊢ scrut => zero
+; E ⊢ zero-branch => v
+; ------
+; E ⊢ case-nat scrut of
 ;       { zero -> zero-branch
 ;       ; succ succ-x -> succ-branch
 ;       }
 ;  => v
 ;
-; Γ ⊢ scrut => succ n
-; Γ, succ-x ↦ n ⊢ succ-branch => v
+; E ⊢ scrut => succ n
+; E, succ-x ↦ n ⊢ succ-branch => v
 ; ------
-; Γ ⊢ case-nat scrut of
+; E ⊢ case-nat scrut of
 ;       { zero -> zero-branch
 ;       ; succ succ-x -> succ-branch
 ;       }
 ;  => v
-(struct clo-val (gamma x body) #:transparent)
+(struct clo-val (env x body) #:transparent)
 (struct succ-val () #:transparent)
 (struct nat-val (n) #:transparent)
-(define (eval gamma ee)
+(define (eval env ee)
   (match ee
     [(mk-var x)
-     ((hash-ref gamma x))]
+     ((hash-ref env x))]
     [(mk-λ x body)
-     (clo-val gamma x body)]
+     (clo-val env x body)]
     [(mk-app fun arg)
-     (match (eval gamma fun)
-       [(clo-val clo-gamma x body)
-        (define in (eval gamma arg))
-        (eval (hash-set clo-gamma x (lambda () in)) body)]
+     (match (eval env fun)
+       [(clo-val clo-env x body)
+        (define in (eval env arg))
+        (eval (hash-set clo-env x (lambda () in)) body)]
        [(succ-val)
-        (match (eval gamma arg)
+        (match (eval env arg)
           [(nat-val n)
            (nat-val (+ n 1))])])]
     [(mk-let-fun fun _maybe-t x def body)
      (define (mk-fun)
-       (clo-val (hash-set gamma fun mk-fun) x def))
-     (eval (hash-set gamma fun mk-fun) body)]
+       (clo-val (hash-set env fun mk-fun) x def))
+     (eval (hash-set env fun mk-fun) body)]
     [(mk-zero)
      (nat-val 0)]
     [(mk-succ)
      (succ-val)]
     [(mk-case-nat scrut zero-branch succ-x succ-branch)
-     (match (eval gamma scrut)
+     (match (eval env scrut)
        [(nat-val 0)
-        (eval gamma zero-branch)]
+        (eval env zero-branch)]
        [(nat-val n)
         (define x (nat-val (- n 1)))
-        (eval (hash-set gamma succ-x (lambda () x)) succ-branch)])]))
+        (eval (hash-set env succ-x (lambda () x)) succ-branch)])]))
 (define (eval-closed ee)
   (eval (hash) ee))
 ; the usual basic examples, with eval
