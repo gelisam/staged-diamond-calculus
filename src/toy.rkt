@@ -69,333 +69,332 @@
 ; raw syntax ;
 ;;;;;;;;;;;;;;
 
-; phase 1 (*M*acro-level) terms with phase 0 terms inside of them
-; eM ::= xM | \xM. eM | eM eM
-;      | zero | succ | case-nat eM of {zero -> eM; succ xM -> eM}
-;      | 'eU | let-diaM xU = eM in eM
+; phase 1 terms with phase 0 terms inside of them
+; e1 ::= x1 | \x1. e1 | e1 e1
+;      | zero | succ | case-nat e1 of {zero -> e1; succ x1 -> e1}
+;      | 'e0 | let-dia1 x0 = e1 in e1
 (my-struct*
-  (mk-varM xM)
-  (mk-λM (xM) eM)
-  (mk-appM eM eM)
-  (mk-let-funM [(eM tM? xM) eM] eM)
-  (mk-zeroM)
-  (mk-succM)
-  (mk-case-natM eM [#|zero|# eM] [(#|succ|# xM) eM])
-  (mk-quoteM eU)
-  (mk-let-diaM [xU tM? eM] eM))
+  (mk-var1 x1)
+  (mk-λ1 (x1) e1)
+  (mk-app1 e1 e1)
+  (mk-let-fun1 [(e1 t1? x1) e1] e1)
+  (mk-zero1)
+  (mk-succ1)
+  (mk-case-nat1 e1 [#|zero|# e1] [(#|succ|# x1) e1])
+  (mk-quote1 e0)
+  (mk-let-dia1 [x0 t1? e1] e1))
 
-; *U*nexpanded phase 0 terms with phase 1 terms inside of them
-; eU ::= xU | \xU. eU | eU eU
-;      | zero | succ | case-nat eU of {zero -> eU; succ xU -> eU}
-;      | $eM | let-macroU xM = eM in eU
+; Unexpanded phase 0 terms with phase 1 terms inside of them
+; e0 ::= x0 | \x0. e0 | e0 e0
+;      | zero | succ | case-nat e0 of {zero -> e0; succ x0 -> e0}
+;      | $e1 | let-macro0 x1 = e1 in e0
 (my-struct*
-  (mk-varU xU)
-  (mk-λU (xU) eU)
-  (mk-appU eU eU)
-  (mk-let-funU [(eU tZ? xU) eU] eU)
-  (mk-zeroU)
-  (mk-succU)
-  (mk-case-natU eU [#|zero|# eU] [(#|succ|# xU) eU])
-  (mk-spliceU eM)
-  (mk-let-macroU [xM tM? eM] eU))
+  (mk-var0 x0)
+  (mk-λ0 (x0) e0)
+  (mk-app0 e0 e0)
+  (mk-let-fun0 [(e0 t? x0) e0] e0)
+  (mk-zero0)
+  (mk-succ0)
+  (mk-case-nat0 e0 [#|zero|# e0] [(#|succ|# x0) e0])
+  (mk-splice0 e1)
+  (mk-let-macro0 [x1 t1? e1] e0))
 
-; *E*xpanded phase 0 terms, with no phase 1 terms
-; eE ::= xE | \xE. eE | eE eE
-;      | zero | succ | case-nat eE of {zero -> eE; succ x -> eE}
+; Expanded phase 0 terms, with no phase 1 terms
+; e ::= x | \x. e | e e
+;      | zero | succ | case-nat e of {zero -> e; succ x -> e}
 (my-struct*
-  (mk-varE xE)
-  (mk-λE (xE) eE)
-  (mk-appE eE eE)
-  (mk-let-funE [(eE tZ? xE) eE] eE)
-  (mk-zeroE)
-  (mk-succE)
-  (mk-case-natE eE [#|zero|# eE] [(#|succ|# xE) eE]))
+  (mk-var x)
+  (mk-λ (x) e)
+  (mk-app e e)
+  (mk-let-fun [(e t? x) e] e)
+  (mk-zero)
+  (mk-succ)
+  (mk-case-nat e [#|zero|# e] [(#|succ|# x) e]))
 
+; phase 1 types with phase 0 types inside of them
+; t1 ::= t1 -> t1 | Nat1 | Dia t
+(struct Arrow1 (in-t1 out-t1) #:transparent)
+(struct Nat1 () #:transparent)
+(struct Dia1 (lower-t) #:transparent)
 
-; phase 1 (*M*acro-level) types with phase 0 types inside of them
-; tM ::= tM -> tM | NatM | Dia tZ
-(struct ArrowM (in-tM out-tM) #:transparent)
-(struct NatM () #:transparent)
-(struct DiaM (lower-tZ) #:transparent)
-
-; phase 0 (*Z*ero) types with no phase 1 types
-; tZ ::= tZ -> tZ | NatZ
-(struct ArrowZ (in-tZ out-tZ) #:transparent)
-(struct NatZ () #:transparent)
+; phase 0 types with no phase 1 types
+; t ::= t -> t | Nat
+(struct Arrow (in-t out-t) #:transparent)
+(struct Nat () #:transparent)
 
 
 ;;;;;;;;;;;;;;;;;;;
 ; syntactic sugar ;
 ;;;;;;;;;;;;;;;;;;;
 
-; basic syntax sugar for Macro-level phase 1 terms
+; basic syntax sugar for phase 1 terms
 
-(define-syntax-rule (λM1 x body)
-  (mk-λM 'x
-    (let ([x (mk-varM 'x)])
+(define-syntax-rule (λ1-mono x body)
+  (mk-λ1 'x
+    (let ([x (mk-var1 'x)])
       body)))
-(check-equal? (λM1 xM xM)
-              (mk-λM 'xM (mk-varM 'xM)))
+(check-equal? (λ1-mono x1 x1)
+              (mk-λ1 'x1 (mk-var1 'x1)))
 
-(define-syntax (λM stx)
+(define-syntax (λ1 stx)
   (syntax-case stx ()
-    [(_ () bodyM)
-     #'bodyM]
-    [(_ (x xs ...) bodyM)
-     #'(λM1 x (λM (xs ...) bodyM))]))
-(check-equal? (λM (xM yM) xM)
-              (mk-λM 'xM
-                (mk-λM 'yM
-                  (mk-varM 'xM))))
+    [(_ () body1)
+     #'body1]
+    [(_ (x xs ...) body1)
+     #'(λ1-mono x (λ1 (xs ...) body1))]))
+(check-equal? (λ1 (x1 y1) x1)
+              (mk-λ1 'x1
+                (mk-λ1 'y1
+                  (mk-var1 'x1))))
 
-(define-syntax (appM stx)
+(define-syntax (app1 stx)
   (syntax-case stx ()
-    [(_ funM argM)
-     #'(mk-appM funM argM)]
-    [(_ funM argMs ... argM)
-     #'(mk-appM (appM funM argMs ...) argM)]))
-(check-equal? (appM (mk-varM 'f) (mk-varM 'x) (mk-varM 'y) (mk-varM 'z))
-              (mk-appM
-                (mk-appM
-                  (mk-appM
-                    (mk-varM 'f)
-                    (mk-varM 'x))
-                  (mk-varM 'y))
-                (mk-varM 'z)))
+    [(_ fun1 arg1)
+     #'(mk-app1 fun1 arg1)]
+    [(_ fun1 arg1s ... arg1)
+     #'(mk-app1 (app1 fun1 arg1s ...) arg1)]))
+(check-equal? (app1 (mk-var1 'f) (mk-var1 'x) (mk-var1 'y) (mk-var1 'z))
+              (mk-app1
+                (mk-app1
+                  (mk-app1
+                    (mk-var1 'f)
+                    (mk-var1 'x))
+                  (mk-var1 'y))
+                (mk-var1 'z)))
 
-(define-syntax (let-funM stx)
+(define-syntax (let-fun1 stx)
   (syntax-case stx ()
     [(_ [(fun x y ...) def] body)
-     #'(mk-let-funM 'fun #f 'x
-         (let ([fun (mk-varM 'fun)]
-               [x (mk-varM 'x)])
-           (λM (y ...) def))
-         (let ([fun (mk-varM 'fun)])
+     #'(mk-let-fun1 'fun #f 'x
+         (let ([fun (mk-var1 'fun)]
+               [x (mk-var1 'x)])
+           (λ1 (y ...) def))
+         (let ([fun (mk-var1 'fun)])
            body))]))
-(check-equal? (let-funM [(f x) (appM f x)]
-                (appM f (mk-zeroM)))
-              (mk-let-funM 'f #f 'x
-                (mk-appM (mk-varM 'f) (mk-varM 'x))
-                (mk-appM (mk-varM 'f) (mk-zeroM))))
-(check-equal? (let-funM [(f x y) (appM f x y)]
-                (appM f (mk-zeroM) (mk-zeroM)))
-              (mk-let-funM 'f #f 'x
-                (mk-λM 'y (appM (mk-varM 'f) (mk-varM 'x) (mk-varM 'y)))
-                (appM (mk-varM 'f) (mk-zeroM) (mk-zeroM))))
+(check-equal? (let-fun1 [(f x) (app1 f x)]
+                (app1 f (mk-zero1)))
+              (mk-let-fun1 'f #f 'x
+                (mk-app1 (mk-var1 'f) (mk-var1 'x))
+                (mk-app1 (mk-var1 'f) (mk-zero1))))
+(check-equal? (let-fun1 [(f x y) (app1 f x y)]
+                (app1 f (mk-zero1) (mk-zero1)))
+              (mk-let-fun1 'f #f 'x
+                (mk-λ1 'y (app1 (mk-var1 'f) (mk-var1 'x) (mk-var1 'y)))
+                (app1 (mk-var1 'f) (mk-zero1) (mk-zero1))))
 
-(define zeroM (mk-zeroM))
-(define succM (mk-succM))
+(define zero1 (mk-zero1))
+(define succ1 (mk-succ1))
 
-(define (natM n)
+(define (nat1 n)
   (if (zero? n)
-      zeroM
-      (appM succM (natM (- n 1)))))
+      zero1
+      (app1 succ1 (nat1 (- n 1)))))
 
-(define-syntax case-natM
-  (syntax-rules (zeroM succM)
-    [(_ scrutM [zeroM zero-branchM] [(succM x) succ-branchM])
-     (mk-case-natM scrutM
-       zero-branchM
-       'x (let ([x (mk-varM 'x)])
-            succ-branchM))]))
-(check-equal? (case-natM zeroM
-                [zeroM
-                 zeroM]
-                [(succM xM)
-                 (appM succM xM)])
-              (mk-case-natM (mk-zeroM)
-                (mk-zeroM)
-                'xM (mk-appM (mk-succM) (mk-varM 'xM))))
+(define-syntax case-nat1
+  (syntax-rules (zero1 succ1)
+    [(_ scrut1 [zero1 zero-branch1] [(succ1 x) succ-branch1])
+     (mk-case-nat1 scrut1
+       zero-branch1
+       'x (let ([x (mk-var1 'x)])
+            succ-branch1))]))
+(check-equal? (case-nat1 zero1
+                [zero1
+                 zero1]
+                [(succ1 x1)
+                 (app1 succ1 x1)])
+              (mk-case-nat1 (mk-zero1)
+                (mk-zero1)
+                'x1 (mk-app1 (mk-succ1) (mk-var1 'x1))))
 
-; basic syntax sugar for Unexpanded phase 0 terms
+; basic syntax sugar for unexpanded phase 0 terms
 
-(define-syntax-rule (λU1 x body)
-  (mk-λU 'x
-    (let ([x (mk-varU 'x)])
+(define-syntax-rule (λ0-mono x body)
+  (mk-λ0 'x
+    (let ([x (mk-var0 'x)])
       body)))
-(check-equal? (λU1 xU xU)
-              (mk-λU 'xU (mk-varU 'xU)))
+(check-equal? (λ0-mono x0 x0)
+              (mk-λ0 'x0 (mk-var0 'x0)))
 
-(define-syntax (λU stx)
+(define-syntax (λ0 stx)
   (syntax-case stx ()
-    [(_ () bodyU)
-     #'bodyU]
-    [(_ (x xs ...) bodyU)
-     #'(λU1 x (λU (xs ...) bodyU))]))
-(check-equal? (λU (xU yU) xU)
-              (mk-λU 'xU
-                (mk-λU 'yU
-                  (mk-varU 'xU))))
+    [(_ () body0)
+     #'body0]
+    [(_ (x xs ...) body0)
+     #'(λ0-mono x (λ0 (xs ...) body0))]))
+(check-equal? (λ0 (x0 y0) x0)
+              (mk-λ0 'x0
+                (mk-λ0 'y0
+                  (mk-var0 'x0))))
 
-(define-syntax (appU stx)
+(define-syntax (app0 stx)
   (syntax-case stx ()
-    [(_ funU argU)
-     #'(mk-appU funU argU)]
-    [(_ funU argUs ... argU)
-     #'(mk-appU (appU funU argUs ...) argU)]))
-(check-equal? (appU (mk-varU 'f) (mk-varU 'x) (mk-varU 'y) (mk-varU 'z))
-              (mk-appU
-                (mk-appU
-                  (mk-appU
-                    (mk-varU 'f)
-                    (mk-varU 'x))
-                  (mk-varU 'y))
-                (mk-varU 'z)))
+    [(_ fun0 arg0)
+     #'(mk-app0 fun0 arg0)]
+    [(_ fun0 arg0s ... arg0)
+     #'(mk-app0 (app0 fun0 arg0s ...) arg0)]))
+(check-equal? (app0 (mk-var0 'f) (mk-var0 'x) (mk-var0 'y) (mk-var0 'z))
+              (mk-app0
+                (mk-app0
+                  (mk-app0
+                    (mk-var0 'f)
+                    (mk-var0 'x))
+                  (mk-var0 'y))
+                (mk-var0 'z)))
 
-(define-syntax (let-funU stx)
+(define-syntax (let-fun0 stx)
   (syntax-case stx ()
     [(_ [(fun x y ...) def] body)
-     #'(mk-let-funU 'fun #f 'x
-         (let ([fun (mk-varU 'fun)]
-               [x (mk-varU 'x)])
-           (λU (y ...) def))
-         (let ([fun (mk-varU 'fun)])
+     #'(mk-let-fun0 'fun #f 'x
+         (let ([fun (mk-var0 'fun)]
+               [x (mk-var0 'x)])
+           (λ0 (y ...) def))
+         (let ([fun (mk-var0 'fun)])
            body))]))
-(check-equal? (let-funU [(f x) (appU f x)]
-                (appU f (mk-zeroU)))
-              (mk-let-funU 'f #f 'x
-                (mk-appU (mk-varU 'f) (mk-varU 'x))
-                (mk-appU (mk-varU 'f) (mk-zeroU))))
-(check-equal? (let-funU [(f x y) (appU f x y)]
-                (appU f (mk-zeroU) (mk-zeroU)))
-              (mk-let-funU 'f #f 'x
-                (mk-λU 'y (appU (mk-varU 'f) (mk-varU 'x) (mk-varU 'y)))
-                (appU (mk-varU 'f) (mk-zeroU) (mk-zeroU))))
+(check-equal? (let-fun0 [(f x) (app0 f x)]
+                (app0 f (mk-zero0)))
+              (mk-let-fun0 'f #f 'x
+                (mk-app0 (mk-var0 'f) (mk-var0 'x))
+                (mk-app0 (mk-var0 'f) (mk-zero0))))
+(check-equal? (let-fun0 [(f x y) (app0 f x y)]
+                (app0 f (mk-zero0) (mk-zero0)))
+              (mk-let-fun0 'f #f 'x
+                (mk-λ0 'y (app0 (mk-var0 'f) (mk-var0 'x) (mk-var0 'y)))
+                (app0 (mk-var0 'f) (mk-zero0) (mk-zero0))))
 
-(define zeroU (mk-zeroU))
-(define succU (mk-succU))
+(define zero0 (mk-zero0))
+(define succ0 (mk-succ0))
 
-(define (natU n)
+(define (nat0 n)
   (if (zero? n)
-      zeroU
-      (appU succU (natU (- n 1)))))
+      zero0
+      (app0 succ0 (nat0 (- n 1)))))
 
-(define-syntax case-natU
-  (syntax-rules (zeroU succU)
-    [(_ scrutU [zeroU zero-branchU] [(succU x) succ-branchU])
-     (mk-case-natU scrutU
-       zero-branchU
-       'x (let ([x (mk-varU 'x)])
-            succ-branchU))]))
-(check-equal? (case-natU zeroU
-                [zeroU
-                 zeroU]
-                [(succU xU)
-                 (appU succU xU)])
-              (mk-case-natU (mk-zeroU)
-                (mk-zeroU)
-                'xU (mk-appU (mk-succU) (mk-varU 'xU))))
+(define-syntax case-nat0
+  (syntax-rules (zero0 succ0)
+    [(_ scrut0 [zero0 zero-branch0] [(succ0 x) succ-branch0])
+     (mk-case-nat0 scrut0
+       zero-branch0
+       'x (let ([x (mk-var0 'x)])
+            succ-branch0))]))
+(check-equal? (case-nat0 zero0
+                [zero0
+                 zero0]
+                [(succ0 x0)
+                 (app0 succ0 x0)])
+              (mk-case-nat0 (mk-zero0)
+                (mk-zero0)
+                'x0 (mk-app0 (mk-succ0) (mk-var0 'x0))))
 
-; basic syntax sugar for Expanded phase 0 terms
+; basic syntax sugar for expanded terms
 
-(define-syntax-rule (λE1 x body)
-  (mk-λE 'x
-    (let ([x (mk-varE 'x)])
+(define-syntax-rule (λ-mono x body)
+  (mk-λ 'x
+    (let ([x (mk-var 'x)])
       body)))
-(check-equal? (λE1 xE xE)
-              (mk-λE 'xE (mk-varE 'xE)))
+(check-equal? (λ-mono x x)
+              (mk-λ 'x (mk-var 'x)))
 
-(define-syntax (λE stx)
+(define-syntax (λ stx)
   (syntax-case stx ()
-    [(_ () bodyE)
-     #'bodyE]
-    [(_ (x xs ...) bodyE)
-     #'(λE1 x (λE (xs ...) bodyE))]))
-(check-equal? (λE (xE yE) xE)
-              (mk-λE 'xE
-                (mk-λE 'yE
-                  (mk-varE 'xE))))
+    [(_ () body)
+     #'body]
+    [(_ (x xs ...) body)
+     #'(λ-mono x (λ (xs ...) body))]))
+(check-equal? (λ (x y) x)
+              (mk-λ 'x
+                (mk-λ 'y
+                  (mk-var 'x))))
 
-(define-syntax (appE stx)
+(define-syntax (app stx)
   (syntax-case stx ()
-    [(_ funE argE)
-     #'(mk-appE funE argE)]
-    [(_ funE argEs ... argE)
-     #'(mk-appE (appE funE argEs ...) argE)]))
-(check-equal? (appE (mk-varE 'f) (mk-varE 'x) (mk-varE 'y) (mk-varE 'z))
-              (mk-appE
-                (mk-appE
-                  (mk-appE
-                    (mk-varE 'f)
-                    (mk-varE 'x))
-                  (mk-varE 'y))
-                (mk-varE 'z)))
+    [(_ fun arg)
+     #'(mk-app fun arg)]
+    [(_ fun args ... arg)
+     #'(mk-app (app fun args ...) arg)]))
+(check-equal? (app (mk-var 'f) (mk-var 'x) (mk-var 'y) (mk-var 'z))
+              (mk-app
+                (mk-app
+                  (mk-app
+                    (mk-var 'f)
+                    (mk-var 'x))
+                  (mk-var 'y))
+                (mk-var 'z)))
 
-(define-syntax (let-funE stx)
+(define-syntax (let-fun stx)
   (syntax-case stx ()
     [(_ [(fun x y ...) def] body)
-     #'(mk-let-funE 'fun #f 'x
-         (let ([fun (mk-varE 'fun)]
-               [x (mk-varE 'x)])
-           (λE (y ...) def))
-         (let ([fun (mk-varE 'fun)])
+     #'(mk-let-fun 'fun #f 'x
+         (let ([fun (mk-var 'fun)]
+               [x (mk-var 'x)])
+           (λ (y ...) def))
+         (let ([fun (mk-var 'fun)])
            body))]))
-(check-equal? (let-funE [(f x) (appE f x)]
-                (appE f (mk-zeroE)))
-              (mk-let-funE 'f #f 'x
-                (mk-appE (mk-varE 'f) (mk-varE 'x))
-                (mk-appE (mk-varE 'f) (mk-zeroE))))
-(check-equal? (let-funE [(f x y) (appE f x y)]
-                (appE f (mk-zeroE) (mk-zeroE)))
-              (mk-let-funE 'f #f 'x
-                (mk-λE 'y (appE (mk-varE 'f) (mk-varE 'x) (mk-varE 'y)))
-                (appE (mk-varE 'f) (mk-zeroE) (mk-zeroE))))
+(check-equal? (let-fun [(f x) (app f x)]
+                (app f (mk-zero)))
+              (mk-let-fun 'f #f 'x
+                (mk-app (mk-var 'f) (mk-var 'x))
+                (mk-app (mk-var 'f) (mk-zero))))
+(check-equal? (let-fun [(f x y) (app f x y)]
+                (app f (mk-zero) (mk-zero)))
+              (mk-let-fun 'f #f 'x
+                (mk-λ 'y (app (mk-var 'f) (mk-var 'x) (mk-var 'y)))
+                (app (mk-var 'f) (mk-zero) (mk-zero))))
 
-(define zeroE (mk-zeroE))
-(define succE (mk-succE))
+(define zero (mk-zero))
+(define succ (mk-succ))
 
-(define (natE n)
+(define (nat n)
   (if (zero? n)
-      zeroE
-      (appE succE (natE (- n 1)))))
+      zero
+      (app succ (nat (- n 1)))))
 
-(define-syntax case-natE
-  (syntax-rules (zeroE succE)
-    [(_ scrutE [zeroE zero-branchE] [(succE x) succ-branchE])
-     (mk-case-natE scrutE
-       zero-branchE
-       'x (let ([x (mk-varE 'x)])
-            succ-branchE))]))
-(check-equal? (case-natE zeroE
-                [zeroE
-                 zeroE]
-                [(succE xE)
-                 (appE succE xE)])
-              (mk-case-natE (mk-zeroE)
-                (mk-zeroE)
-                'xE (mk-appE (mk-succE) (mk-varE 'xE))))
+(define-syntax case-nat
+  (syntax-rules (zero succ)
+    [(_ scrut [zero zero-branch] [(succ x) succ-branch])
+     (mk-case-nat scrut
+       zero-branch
+       'x (let ([x (mk-var 'x)])
+            succ-branch))]))
+(check-equal? (case-nat zero
+                [zero
+                 zero]
+                [(succ x)
+                 (app succ x)])
+              (mk-case-nat (mk-zero)
+                (mk-zero)
+                'x (mk-app (mk-succ) (mk-var 'x))))
 
-; more interesting syntax sugar with let-diaM, quoteM, let-macroU, and spliceU
+; more interesting syntax sugar with let-dia1, quote1, let-macro0, and splice0
 
-(define-syntax-rule (let-diaM [x defM] bodyM)
-  (mk-let-diaM 'x #f defM
-    (let ([x (mk-varU 'x)])
-      bodyM)))
-(define (quoteM bodyU) (mk-quoteM bodyU))
-(check-equal? (let-diaM [one (natU 1)]
-                (quoteM (appU one zeroU)))
-              (mk-let-diaM 'one #f (mk-appU (mk-succU) (mk-zeroU))
-                (mk-quoteM (mk-appU (mk-varU 'one) (mk-zeroU)))))
+(define-syntax-rule (let-dia1 [x def1] body1)
+  (mk-let-dia1 'x #f def1
+    (let ([x (mk-var0 'x)])
+      body1)))
+(define (quote1 body0) (mk-quote1 body0))
+(check-equal? (let-dia1 [one (nat0 1)]
+                (quote1 (app0 one zero0)))
+              (mk-let-dia1 'one #f (mk-app0 (mk-succ0) (mk-zero0))
+                (mk-quote1 (mk-app0 (mk-var0 'one) (mk-zero0)))))
 
-(define-syntax-rule (let-macroU1 [x defM] bodyU)
-  (mk-let-macroU 'x #f defM
-    (let ([x (mk-varM 'x)])
-      bodyU)))
-(define-syntax (let-macroU stx)
+(define-syntax-rule (let-macro01 [x def1] body0)
+  (mk-let-macro0 'x #f def1
+    (let ([x (mk-var1 'x)])
+      body0)))
+(define-syntax (let-macro0 stx)
   (syntax-case stx ()
-    [(_ [(f x ...) defM] bodyU)
-     #'(let-macroU1 [f (λM (x ...) defM)] bodyU)]
-    [(_ [f defM] bodyU)
-     #'(let-macroU1 [f defM] bodyU)]))
-(define (spliceU termM) (mk-spliceU termM))
-(check-equal? (let-macroU [one (natM 1)]
-                (spliceU (appM (mk-varU 'f) one)))
-              (mk-let-macroU 'one #f (mk-appM (mk-succM) (mk-zeroM))
-                (mk-spliceU (mk-appM (mk-varU 'f) (mk-varM 'one)))))
-(check-equal? (let-macroU [(f x) (appM succM x)]
-                (spliceU (appM f (quoteM (mk-varM 'one)))))
-              (mk-let-macroU 'f #f (mk-λM 'x (mk-appM (mk-succM) (mk-varM 'x)))
-                (mk-spliceU (mk-appM (mk-varM 'f) (mk-quoteM (mk-varM 'one))))))
+    [(_ [(f x ...) def1] body0)
+     #'(let-macro01 [f (λ1 (x ...) def1)] body0)]
+    [(_ [f def1] body0)
+     #'(let-macro01 [f def1] body0)]))
+(define (splice0 term1) (mk-splice0 term1))
+(check-equal? (let-macro0 [one (nat1 1)]
+                (splice0 (app1 (mk-var0 'f) one)))
+              (mk-let-macro0 'one #f (mk-app1 (mk-succ1) (mk-zero1))
+                (mk-splice0 (mk-app1 (mk-var0 'f) (mk-var1 'one)))))
+(check-equal? (let-macro0 [(f x) (app1 succ1 x)]
+                (splice0 (app1 f (quote1 (mk-var1 'one)))))
+              (mk-let-macro0 'f #f (mk-λ1 'x (mk-app1 (mk-succ1) (mk-var1 'x)))
+                (mk-splice0 (mk-app1 (mk-var1 'f) (mk-quote1 (mk-var1 'one))))))
 
 
 ;;;;;;;;;;;;;;;
@@ -409,21 +408,21 @@
   (match t
     [(? uf-set? other-uf-set)
      (uf-same-set? uf-set other-uf-set)]
-    [(ArrowM ta tb)
+    [(Arrow1 ta tb)
      (or (occurs? uf-set ta)
          (occurs? uf-set tb))]
-    [(ArrowZ ta tb)
+    [(Arrow ta tb)
      (or (occurs? uf-set ta)
          (occurs? uf-set tb))]
-    [(NatM) #f]
-    [(NatZ) #f]
-    [(DiaM t)
+    [(Nat1) #f]
+    [(Nat) #f]
+    [(Dia1 t)
      (occurs? uf-set t)]))
 (let ([uf-set-a (new-uf-set)]
       [uf-set-b (new-uf-set)])
-  (check-equal? (occurs? uf-set-a (ArrowM (NatM) (NatM))) #f)
-  (check-equal? (occurs? uf-set-a (ArrowM (NatM) uf-set-a)) #t)
-  (check-equal? (occurs? uf-set-a (ArrowM (NatM) uf-set-b)) #f))
+  (check-equal? (occurs? uf-set-a (Arrow1 (Nat1) (Nat1))) #f)
+  (check-equal? (occurs? uf-set-a (Arrow1 (Nat1) uf-set-a)) #t)
+  (check-equal? (occurs? uf-set-a (Arrow1 (Nat1) uf-set-b)) #f))
 
 (define (zonk1 t)
   (if (uf-set? t)
@@ -434,18 +433,18 @@
   (match (zonk1 t)
     [(? uf-set? uf-set)
      uf-set]
-    [(ArrowM in-t out-t)
-     (ArrowM (zonk in-t)
+    [(Arrow1 in-t out-t)
+     (Arrow1 (zonk in-t)
              (zonk out-t))]
-    [(ArrowZ in-t out-t)
-     (ArrowZ (zonk in-t)
+    [(Arrow in-t out-t)
+     (Arrow (zonk in-t)
              (zonk out-t))]
-    [(NatM)
-     (NatM)]
-    [(NatZ)
-     (NatZ)]
-    [(DiaM lower-t)
-     (DiaM (zonk lower-t))]))
+    [(Nat1)
+     (Nat1)]
+    [(Nat)
+     (Nat)]
+    [(Dia1 lower-t)
+     (Dia1 (zonk lower-t))]))
 
 (define (equivalent? ta tb)
   (let ([zonked1-ta (zonk1 ta)]
@@ -454,22 +453,22 @@
       [(list (? uf-set? uf-set-a)
              (? uf-set? uf-set-b))
        (uf-same-set? uf-set-a uf-set-b)]
-      [(list (ArrowM in-a out-a)
-             (ArrowM in-b out-b))
+      [(list (Arrow1 in-a out-a)
+             (Arrow1 in-b out-b))
        (and (equivalent? in-a in-b)
             (equivalent? out-a out-b))]
-      [(list (ArrowZ in-a out-a)
-             (ArrowZ in-b out-b))
+      [(list (Arrow in-a out-a)
+             (Arrow in-b out-b))
        (and (equivalent? in-a in-b)
             (equivalent? out-a out-b))]
-      [(list (NatM)
-             (NatM))
+      [(list (Nat1)
+             (Nat1))
        #t]
-      [(list (NatZ)
-             (NatZ))
+      [(list (Nat)
+             (Nat))
        #t]
-      [(list (DiaM lower-ta)
-             (DiaM lower-tb))
+      [(list (Dia1 lower-ta)
+             (Dia1 lower-tb))
        (equivalent? lower-ta lower-tb)]
       [_
        #f])))
@@ -491,88 +490,88 @@
            (begin
              (uf-set-canonical! uf-set t)
              t))]
-      [(list (ArrowM in-a out-a)
-             (ArrowM in-b out-b))
+      [(list (Arrow1 in-a out-a)
+             (Arrow1 in-b out-b))
        (and-let* ([in (unify in-a in-b)]
                   [out (unify out-a out-b)])
-         (ArrowM in out))]
-      [(list (ArrowZ in-a out-a)
-             (ArrowZ in-b out-b))
+         (Arrow1 in out))]
+      [(list (Arrow in-a out-a)
+             (Arrow in-b out-b))
        (and-let* ([in (unify in-a in-b)]
                   [out (unify out-a out-b)])
-         (ArrowZ in out))]
-      [(list (NatM)
-             (NatM))
-       (NatM)]
-      [(list (NatZ)
-             (NatZ))
-       (NatZ)]
-      [(list (DiaM lower-ta)
-             (DiaM lower-tb))
+         (Arrow in out))]
+      [(list (Nat1)
+             (Nat1))
+       (Nat1)]
+      [(list (Nat)
+             (Nat))
+       (Nat)]
+      [(list (Dia1 lower-ta)
+             (Dia1 lower-tb))
        (and-let* ([lower (unify lower-ta lower-tb)])
-         (DiaM lower))]
+         (Dia1 lower))]
       [_
        #f])))
 (let ([uf-set-a (new-uf-set)]
       [uf-set-b (new-uf-set)])
-  (check-equal? (unify (ArrowM (NatM) (NatM))
-                       (NatM))
+  (check-equal? (unify (Arrow1 (Nat1) (Nat1))
+                       (Nat1))
                 #f)
-  (check-equal? (unify (ArrowM (NatM) (NatM))
-                       (ArrowM (NatM) (NatM)))
-                (ArrowM (NatM) (NatM)))
-  (check-equal? (unify (ArrowM uf-set-a (NatM))
-                       (ArrowM (NatM) uf-set-b))
-                (ArrowM (NatM) (NatM)))
-  (check-equal? (zonk1 uf-set-a) (NatM))
-  (check-equal? (zonk1 uf-set-b) (NatM)))
+  (check-equal? (unify (Arrow1 (Nat1) (Nat1))
+                       (Arrow1 (Nat1) (Nat1)))
+                (Arrow1 (Nat1) (Nat1)))
+  (check-equal? (unify (Arrow1 uf-set-a (Nat1))
+                       (Arrow1 (Nat1) uf-set-b))
+                (Arrow1 (Nat1) (Nat1)))
+  (check-equal? (zonk1 uf-set-a) (Nat1))
+  (check-equal? (zonk1 uf-set-b) (Nat1)))
 (let ([uf-set-a (new-uf-set)]
       [uf-set-b (new-uf-set)])
   (check-equal? (uf-same-set? uf-set-a uf-set-b)
                 #f)
   (check-equal? (equivalent?
-                  (unify (ArrowM uf-set-a uf-set-b)
-                         (ArrowM uf-set-b uf-set-a))
-                  (ArrowM uf-set-a uf-set-a))
+                  (unify (Arrow1 uf-set-a uf-set-b)
+                         (Arrow1 uf-set-b uf-set-a))
+                  (Arrow1 uf-set-a uf-set-a))
                 #t))
 (let ([uf-set-a (new-uf-set)]
       [uf-set-b (new-uf-set)]
       [uf-set-c (new-uf-set)]
       [uf-set-d (new-uf-set)])
   (check-equal? (equivalent?
-                  (unify (ArrowM uf-set-a uf-set-b)
-                         (ArrowM uf-set-c uf-set-d))
-                  (ArrowM uf-set-a uf-set-a))
+                  (unify (Arrow1 uf-set-a uf-set-b)
+                         (Arrow1 uf-set-c uf-set-d))
+                  (Arrow1 uf-set-a uf-set-a))
                 #f))
 (let ([uf-set-a (new-uf-set)])
-  (check-exn #rx"occurs-check" (λ ()
+  (check-exn #rx"occurs-check" (lambda ()
     (unify uf-set-a
-           (ArrowM uf-set-a uf-set-a)))))
+           (Arrow1 uf-set-a uf-set-a)))))
 
 
 ;;;;;;;;;;;;;;;;
 ; type checker ;
 ;;;;;;;;;;;;;;;;
 
-; typing rules for Macro-level phase 1 terms
+; typing rules for phase 1 terms
 ;
-; xM : tM ∈ Δ
+; x1 : t1 ∈ Δ
 ; ------
-; {Δ}; Γ ⊢ xM : tM
+; {Δ}; Γ ⊢ x1 : t1
 ;
-; {Δ, xM : in-tM}; Γ ⊢ bodyM : out-tM
+; {Δ, x1 : in-t1}; Γ ⊢ body1 : out-t1
 ; ------
-; {Δ}; Γ ⊢ \xM. bodyM : in-tM -> out-tM
+; {Δ}; Γ ⊢ \x1. body1 : in-t1 -> out-t1
 ;
-; {Δ}; Γ ⊢ funM : in-tM -> out-tM
-; {Δ}; Γ ⊢ argM : in-tM
+; {Δ}; Γ ⊢ fun1 : in-t1 -> out-t1
+; {Δ}; Γ ⊢ arg1 : in-t1
 ; ------
-; {Δ}; Γ ⊢ funM argM : out-tM
+; {Δ}; Γ ⊢ fun1 arg1 : out-t1
 ;
-; {Δ, funM : in-tM -> out-tM, xM : in-tM}; Γ ⊢ defM : out-tM
-; {Δ, funM : in-tM -> out-tM}; Γ ⊢ bodyM : tM
+; {Δ, fun1 : in-t1 -> out-t1, x1 : in-t1}; Γ ⊢ def1 : out-t1
+; {Δ, fun1 : in-t1 -> out-t1}; Γ ⊢ body1 : t1
 ; ------
-; {Δ}; Γ ⊢ let-fun funM xM = defM in bodyM : tM
+; {Δ}; Γ ⊢ let-fun fun1 x1 = def1 in body1 : t1
 ;
 ; ------
 ; {Δ}; Γ ⊢ zero : Nat
@@ -580,97 +579,97 @@
 ; ------
 ; {Δ}; Γ ⊢ succ : Nat -> Nat
 ;
-; {Δ}; Γ ⊢ scrutM : Nat
-; {Δ}; Γ ⊢ zero-branchM : tM
-; {Δ, succ-xM : Nat}; Γ ⊢ succ-branchM : tM
+; {Δ}; Γ ⊢ scrut1 : Nat
+; {Δ}; Γ ⊢ zero-branch1 : t1
+; {Δ, succ-x1 : Nat}; Γ ⊢ succ-branch1 : t1
 ; ------
-; {Δ}; Γ ⊢ case-nat scrutM of
-;            { zero -> zero-branchM
-;            ; succ succ-xM -> succ-branchM
-;            } : tM
+; {Δ}; Γ ⊢ case-nat scrut1 of
+;            { zero -> zero-branch1
+;            ; succ succ-x1 -> succ-branch1
+;            } : t1
 ;
-; Δ; {Γ} ⊢ lowerU : inner-tZ
+; Δ; {Γ} ⊢ lower0 : inner-t
 ; ------
-; {Δ}; Γ ⊢ 'lowerU : Dia inner-tZ
+; {Δ}; Γ ⊢ 'lower0 : Dia inner-t
 ;
-; {Δ}; Γ ⊢ defM : Dia lower-tZ
-; {Δ}; Γ, xU : lower-tZ ⊢ bodyM : tM
+; {Δ}; Γ ⊢ def1 : Dia lower-t
+; {Δ}; Γ, x0 : lower-t ⊢ body1 : t1
 ; ------
-; {Δ}; Γ ⊢ let-diaM xU = defM in bodyM : tM
-(define (checkM delta gamma eeM ttM)
-  (match eeM
-    [(mk-varM xM)
-     (unify ttM (hash-ref delta xM))]
-    [(mk-λM xM bodyM)
-     (define x-tM (new-uf-set))
-     (define out-tM (new-uf-set))
-     (and (checkM (hash-set delta xM x-tM) gamma
-                  bodyM out-tM)
-          (unify ttM (ArrowM x-tM out-tM)))]
-    [(mk-appM funM argM)
-     (define in-tM (new-uf-set))
-     (define out-tM ttM)
-     (and (checkM delta gamma funM (ArrowM in-tM out-tM))
-          (checkM delta gamma argM in-tM)
-          ttM)]
-    [(mk-let-funM funM maybe-tM xM defM bodyM)
-     (define in-tM (new-uf-set))
-     (define out-tM (new-uf-set))
-     (and (when maybe-tM
-            (unify maybe-tM (ArrowM in-tM out-tM)))
-          (checkM (hash-set* delta
-                    funM (ArrowM in-tM out-tM)
-                    xM in-tM)
+; {Δ}; Γ ⊢ let-dia1 x0 = def1 in body1 : t1
+(define (check1 delta gamma ee1 tt1)
+  (match ee1
+    [(mk-var1 x1)
+     (unify tt1 (hash-ref delta x1))]
+    [(mk-λ1 x1 body1)
+     (define x-t1 (new-uf-set))
+     (define out-t1 (new-uf-set))
+     (and (check1 (hash-set delta x1 x-t1) gamma
+                  body1 out-t1)
+          (unify tt1 (Arrow1 x-t1 out-t1)))]
+    [(mk-app1 fun1 arg1)
+     (define in-t1 (new-uf-set))
+     (define out-t1 tt1)
+     (and (check1 delta gamma fun1 (Arrow1 in-t1 out-t1))
+          (check1 delta gamma arg1 in-t1)
+          tt1)]
+    [(mk-let-fun1 fun1 maybe-t1 x1 def1 body1)
+     (define in-t1 (new-uf-set))
+     (define out-t1 (new-uf-set))
+     (and (when maybe-t1
+            (unify maybe-t1 (Arrow1 in-t1 out-t1)))
+          (check1 (hash-set* delta
+                    fun1 (Arrow1 in-t1 out-t1)
+                    x1 in-t1)
                   gamma
-                  defM out-tM)
+                  def1 out-t1)
           ; TODO: generalize
-          (checkM (hash-set delta
-                    funM (ArrowM in-tM out-tM))
+          (check1 (hash-set delta
+                    fun1 (Arrow1 in-t1 out-t1))
                   gamma
-                  bodyM ttM))]
-    [(mk-zeroM)
-     (unify ttM (NatM))]
-    [(mk-succM)
-     (unify ttM (ArrowM (NatM) (NatM)))]
-    [(mk-case-natM scrutM zero-branchM succ-xM succ-branchM)
-     (and (checkM delta gamma scrutM (NatM))
-          (checkM delta gamma zero-branchM ttM)
-          (checkM (hash-set delta succ-xM (NatM)) gamma
-                  succ-branchM ttM))]
-    [(mk-quoteM lowerU)
-     (define lower-tZ (new-uf-set))
-     (and (checkU delta gamma lowerU lower-tZ)
-          (unify ttM (DiaM lower-tZ)))]
-    [(mk-let-diaM xU maybe-tM defM bodyM)
-     (define lower-tZ (new-uf-set))
-     (and (when maybe-tM
-            (unify maybe-tM (DiaM lower-tZ)))
-          (checkM delta gamma defM (DiaM lower-tZ))
-          (checkM delta (hash-set gamma xU lower-tZ) bodyM ttM))]))
-(define (inferM eeM)
-  (define ttM (new-uf-set))
-  (and (checkM (hash) (hash) eeM ttM)
-       (zonk ttM)))
+                  body1 tt1))]
+    [(mk-zero1)
+     (unify tt1 (Nat1))]
+    [(mk-succ1)
+     (unify tt1 (Arrow1 (Nat1) (Nat1)))]
+    [(mk-case-nat1 scrut1 zero-branch1 succ-x1 succ-branch1)
+     (and (check1 delta gamma scrut1 (Nat1))
+          (check1 delta gamma zero-branch1 tt1)
+          (check1 (hash-set delta succ-x1 (Nat1)) gamma
+                  succ-branch1 tt1))]
+    [(mk-quote1 lower0)
+     (define lower-t (new-uf-set))
+     (and (check0 delta gamma lower0 lower-t)
+          (unify tt1 (Dia1 lower-t)))]
+    [(mk-let-dia1 x0 maybe-t1 def1 body1)
+     (define lower-t (new-uf-set))
+     (and (when maybe-t1
+            (unify maybe-t1 (Dia1 lower-t)))
+          (check1 delta gamma def1 (Dia1 lower-t))
+          (check1 delta (hash-set gamma x0 lower-t) body1 tt1))]))
+(define (infer1 ee1)
+  (define tt1 (new-uf-set))
+  (and (check1 (hash) (hash) ee1 tt1)
+       (zonk tt1)))
 
-; typing rules for Unexpanded phase 0 terms
+; typing rules for unexpanded phase 0 terms
 ;
-; xU : tZ ∈ Δ
+; x0 : t ∈ Δ
 ; ------
-; Δ; {Γ} ⊢ xU : tZ
+; Δ; {Γ} ⊢ x0 : t
 ;
-; Δ; {Γ, xU : in-tZ} ⊢ bodyU : out-tZ
+; Δ; {Γ, x0 : in-t} ⊢ body0 : out-t
 ; ------
-; Δ; {Γ} ⊢ \xU. bodyU : in-tZ -> out-tZ
+; Δ; {Γ} ⊢ \x0. body0 : in-t -> out-t
 ;
-; Δ; {Γ} ⊢ funU : in-tZ -> out-tZ
-; Δ; {Γ} ⊢ argU : in-tZ
+; Δ; {Γ} ⊢ fun0 : in-t -> out-t
+; Δ; {Γ} ⊢ arg0 : in-t
 ; ------
-; Δ; {Γ} ⊢ funU argU : out-tZ
+; Δ; {Γ} ⊢ fun0 arg0 : out-t
 ;
-; Δ; {Γ, funU : in-tZ -> out-tZ, xU : in-t0} ⊢ defU : out-tZ
-; Δ; {Γ, funU : in-tZ -> out-tZ} ⊢ bodyU : tZ
+; Δ; {Γ, fun0 : in-t -> out-t, x0 : in-t0} ⊢ def0 : out-t
+; Δ; {Γ, fun0 : in-t -> out-t} ⊢ body0 : t
 ; ------
-; {Δ}; Γ ⊢ letfun funU xU = defU in bodyU : tZ
+; {Δ}; Γ ⊢ letfun fun0 x0 = def0 in body0 : t
 ;
 ; ------
 ; Δ; {Γ} ⊢ zero : Nat
@@ -678,302 +677,302 @@
 ; ------
 ; Δ; {Γ} ⊢ succ : Nat -> Nat
 ;
-; Δ; {Γ} ⊢ scrutU : Nat
-; Δ; {Γ} ⊢ zero-branchU : tZ
-; Δ; {Γ, succ-xU : Nat} ⊢ succ-branchU : tZ
+; Δ; {Γ} ⊢ scrut0 : Nat
+; Δ; {Γ} ⊢ zero-branch0 : t
+; Δ; {Γ, succ-x0 : Nat} ⊢ succ-branch0 : t
 ; ------
-; Δ; {Γ} ⊢ case-nat scrutU of
-;            { zero -> zero-branchU
-;            ; succ succ-xU -> succ-branchU
-;            } : tZ
+; Δ; {Γ} ⊢ case-nat scrut0 of
+;            { zero -> zero-branch0
+;            ; succ succ-x0 -> succ-branch0
+;            } : t
 ;
-; {Δ}; Γ ⊢ higherM : Dia lower-tZ
+; {Δ}; Γ ⊢ higher1 : Dia lower-t
 ; ------
-; Δ; {Γ} ⊢ $higherM : lower-tZ
+; Δ; {Γ} ⊢ $higher1 : lower-t
 ;
-; {Δ}; Γ ⊢ defM : x-tM
-; Δ, xM : x-tM; {Γ} ⊢ bodyU : tZ
+; {Δ}; Γ ⊢ def1 : x-t1
+; Δ, x1 : x-t1; {Γ} ⊢ body0 : t
 ; ------
-; Δ; {Γ} ⊢ let-macroU xM = defM in bodyU : tZ
-(define (checkU delta gamma eeU ttZ)
-  (match eeU
-    [(mk-varU xU)
-     (unify ttZ (hash-ref gamma xU))]
-    [(mk-λU xU bodyU)
-     (define x-tZ (new-uf-set))
-     (define out-tZ (new-uf-set))
-     (and (checkU delta (hash-set gamma xU x-tZ)
-                  bodyU out-tZ)
-          (unify ttZ (ArrowZ x-tZ out-tZ)))]
-    [(mk-appU funU argU)
-     (define in-tZ (new-uf-set))
-     (define out-tZ ttZ)
-     (and (checkU delta gamma funU (ArrowZ in-tZ out-tZ))
-          (checkU delta gamma argU in-tZ)
-          ttZ)]
-    [(mk-let-funU funU maybe-tZ xU defU bodyU)
-     (define in-tZ (new-uf-set))
-     (define out-tZ (new-uf-set))
-     (and (when maybe-tZ
-            (unify maybe-tZ (ArrowZ in-tZ out-tZ)))
-          (checkU delta
+; Δ; {Γ} ⊢ let-macro0 x1 = def1 in body0 : t
+(define (check0 delta gamma ee0 tt)
+  (match ee0
+    [(mk-var0 x0)
+     (unify tt (hash-ref gamma x0))]
+    [(mk-λ0 x0 body0)
+     (define x-t (new-uf-set))
+     (define out-t (new-uf-set))
+     (and (check0 delta (hash-set gamma x0 x-t)
+                  body0 out-t)
+          (unify tt (Arrow x-t out-t)))]
+    [(mk-app0 fun0 arg0)
+     (define in-t (new-uf-set))
+     (define out-t tt)
+     (and (check0 delta gamma fun0 (Arrow in-t out-t))
+          (check0 delta gamma arg0 in-t)
+          tt)]
+    [(mk-let-fun0 fun0 maybe-t x0 def0 body0)
+     (define in-t (new-uf-set))
+     (define out-t (new-uf-set))
+     (and (when maybe-t
+            (unify maybe-t (Arrow in-t out-t)))
+          (check0 delta
                   (hash-set* gamma
-                    funU (ArrowZ in-tZ out-tZ)
-                    xU in-tZ)
-                  defU out-tZ)
+                    fun0 (Arrow in-t out-t)
+                    x0 in-t)
+                  def0 out-t)
           ; TODO: generalize
-          (checkU delta
+          (check0 delta
                   (hash-set gamma
-                    funU (ArrowZ in-tZ out-tZ))
-                  bodyU ttZ))]
-    [(mk-zeroU)
-     (unify ttZ (NatZ))]
-    [(mk-succU)
-     (unify ttZ (ArrowZ (NatZ) (NatZ)))]
-    [(mk-case-natU scrutU zero-branchU succ-xU succ-branchU)
-     (and (checkU delta gamma scrutU (NatZ))
-          (checkU delta gamma zero-branchU ttZ)
-          (checkU delta (hash-set gamma succ-xU (NatZ))
-                  succ-branchU ttZ))]
-    [(mk-spliceU higherM)
-     (and (checkM delta gamma higherM (DiaM ttZ))
-          ttZ)]
-    [(mk-let-macroU xM maybe-tM defM bodyU)
-     (define def-tM (new-uf-set))
-     (and (when maybe-tM
-            (unify maybe-tM def-tM))
-          (checkM delta gamma defM def-tM)
-          (checkU (hash-set delta xM def-tM) gamma bodyU ttZ))]))
-(define (inferU eeU)
-  (define ttZ (new-uf-set))
-  (and (checkU (hash) (hash) eeU ttZ)
-       (zonk ttZ)))
+                    fun0 (Arrow in-t out-t))
+                  body0 tt))]
+    [(mk-zero0)
+     (unify tt (Nat))]
+    [(mk-succ0)
+     (unify tt (Arrow (Nat) (Nat)))]
+    [(mk-case-nat0 scrut0 zero-branch0 succ-x0 succ-branch0)
+     (and (check0 delta gamma scrut0 (Nat))
+          (check0 delta gamma zero-branch0 tt)
+          (check0 delta (hash-set gamma succ-x0 (Nat))
+                  succ-branch0 tt))]
+    [(mk-splice0 higher1)
+     (and (check1 delta gamma higher1 (Dia1 tt))
+          tt)]
+    [(mk-let-macro0 x1 maybe-t1 def1 body0)
+     (define def-t1 (new-uf-set))
+     (and (when maybe-t1
+            (unify maybe-t1 def-t1))
+          (check1 delta gamma def1 def-t1)
+          (check0 (hash-set delta x1 def-t1) gamma body0 tt))]))
+(define (infer0 ee0)
+  (define tt (new-uf-set))
+  (and (check0 (hash) (hash) ee0 tt)
+       (zonk tt)))
 
-; basic examples with inferM
-(check-equal? (inferM (appM succM zeroM))
-              (NatM))
-(check-equal? (inferM (appM zeroM succM))
+; basic examples with infer1
+(check-equal? (infer1 (app1 succ1 zero1))
+              (Nat1))
+(check-equal? (infer1 (app1 zero1 succ1))
               #f)
-(check-equal? (inferM (let-funM [(const-zero _) zeroM]
-                        (appM const-zero succM)))
-              (NatM))
-(check-equal? (inferM (let-funM [(id x) x]
-                        (appM id zeroM)))
-              (NatM))
+(check-equal? (infer1 (let-fun1 [(const-zero _) zero1]
+                        (app1 const-zero succ1)))
+              (Nat1))
+(check-equal? (infer1 (let-fun1 [(id x) x]
+                        (app1 id zero1)))
+              (Nat1))
 ; TODO: uncomment once generalization is implemented
-;(check-equal? (inferM (let-funM "id" "x" (varM "x")
-;                        (appM
-;                          (appM (varM "id") (varM "id"))
-;                          (zeroM))))
-;              (NatM))
-(check-equal? (inferM (let-funM [(add x y)
-                                 (case-natM x
-                                   [zeroM
+;(check-equal? (infer1 (let-fun1 "id" "x" (var1 "x")
+;                        (app1
+;                          (app1 (var1 "id") (var1 "id"))
+;                          (zero1))))
+;              (Nat1))
+(check-equal? (infer1 (let-fun1 [(add x y)
+                                 (case-nat1 x
+                                   [zero1
                                     y]
-                                   [(succM x-1)
-                                    (appM succM
-                                      (appM add x-1 y))])]
-                        (appM add (natM 2) (natM 2))))
-              (NatM))
-; same basic examples with inferU
-(check-equal? (inferU (appU succU zeroU))
-              (NatZ))
-(check-equal? (inferU (appU zeroU succU))
+                                   [(succ1 x-1)
+                                    (app1 succ1
+                                      (app1 add x-1 y))])]
+                        (app1 add (nat1 2) (nat1 2))))
+              (Nat1))
+; same basic examples with infer0
+(check-equal? (infer0 (app0 succ0 zero0))
+              (Nat))
+(check-equal? (infer0 (app0 zero0 succ0))
               #f)
-(check-equal? (inferU (let-funU [(const-zero _) zeroU]
-                        (appU const-zero succU)))
-              (NatZ))
-(check-equal? (inferU (let-funU [(id x) x]
-                        (appU id zeroU)))
-              (NatZ))
+(check-equal? (infer0 (let-fun0 [(const-zero _) zero0]
+                        (app0 const-zero succ0)))
+              (Nat))
+(check-equal? (infer0 (let-fun0 [(id x) x]
+                        (app0 id zero0)))
+              (Nat))
 ; TODO: uncomment once generalization is implemented
-;(check-equal? (inferU (let-funU "id" "x" (varU "x")
-;                        (appU
-;                          (appU (varU "id") (varU "id"))
-;                          (zeroU))))
-;              (NatZ))
-(check-equal? (inferU (let-funU [(add x y)
-                                 (case-natU x
-                                   [zeroU
+;(check-equal? (infer0 (let-fun0 "id" "x" (var0 "x")
+;                        (app0
+;                          (app0 (var0 "id") (var0 "id"))
+;                          (zero0))))
+;              (Nat))
+(check-equal? (infer0 (let-fun0 [(add x y)
+                                 (case-nat0 x
+                                   [zero0
                                     y]
-                                   [(succU x-1)
-                                    (appU succU
-                                      (appU add x-1 y))])]
-                        (appU add (natU 2) (natU 2))))
-              (NatZ))
-; more interesting examples with let-diaM, quoteM, let-macroU, and spliceU:
-(check-equal? (inferM (let-diaM [two (quoteM (natU 2))]
-                        (quoteM (appU succU
-                                  (appU succU
+                                   [(succ0 x-1)
+                                    (app0 succ0
+                                      (app0 add x-1 y))])]
+                        (app0 add (nat0 2) (nat0 2))))
+              (Nat))
+; more interesting examples with let-dia1, quote1, let-macro0, and splice0:
+(check-equal? (infer1 (let-dia1 [two (quote1 (nat0 2))]
+                        (quote1 (app0 succ0
+                                  (app0 succ0
                                     two)))))
-              (DiaM (NatZ)))
-(check-equal? (inferU (let-funU [(add x y)
-                                 (case-natU x
-                                   [zeroU
+              (Dia1 (Nat)))
+(check-equal? (infer0 (let-fun0 [(add x y)
+                                 (case-nat0 x
+                                   [zero0
                                     y]
-                                   [(succU x-1)
-                                    (appU succU
-                                      (appU add x-1 y))])]
-                        (let-funU [(mul x y)
-                                   (case-natU x
-                                     [zeroU
-                                      zeroU]
-                                     [(succU x-1)
-                                      (appU add
+                                   [(succ0 x-1)
+                                    (app0 succ0
+                                      (app0 add x-1 y))])]
+                        (let-fun0 [(mul x y)
+                                   (case-nat0 x
+                                     [zero0
+                                      zero0]
+                                     [(succ0 x-1)
+                                      (app0 add
                                         y
-                                        (appU mul x-1 y))])]
-                          (let-macroU [(power n diaX)
-                                       (let-diaM [x diaX]
-                                         (let-funM [(go n-1)
-                                                    (case-natM n-1
-                                                      [zeroM
-                                                       (quoteM x)]
-                                                      [(succM n-2)
-                                                       (let-diaM [recur
-                                                                  (appM go n-2)]
-                                                         (quoteM
-                                                           (appU mul x recur)))])]
-                                           (case-natM n
-                                             [zeroM
-                                              (quoteM (natU 1))]
-                                             [(succM n-1)
-                                              (appM go n-1)])))]
-                            (let-funU [(square x)
-                                       (spliceU (appM power (natM 2) (quoteM x)))]
-                              (appU square (appU square (natU 2))))))))
-              (NatZ))
+                                        (app0 mul x-1 y))])]
+                          (let-macro0 [(power n diaX)
+                                       (let-dia1 [x diaX]
+                                         (let-fun1 [(go n-1)
+                                                    (case-nat1 n-1
+                                                      [zero1
+                                                       (quote1 x)]
+                                                      [(succ1 n-2)
+                                                       (let-dia1 [recur
+                                                                  (app1 go n-2)]
+                                                         (quote1
+                                                           (app0 mul x recur)))])]
+                                           (case-nat1 n
+                                             [zero1
+                                              (quote1 (nat0 1))]
+                                             [(succ1 n-1)
+                                              (app1 go n-1)])))]
+                            (let-fun0 [(square x)
+                                       (splice0 (app1 power (nat1 2) (quote1 x)))]
+                              (app0 square (app0 square (nat0 2))))))))
+              (Nat))
 
-; typing rules for Expanded phase 0 terms
+; typing rules for expanded phase 0 terms
 ;
-; xE : tZ ∈ Γ
+; x : t ∈ Γ
 ; ------
-; Γ ⊢ xE : tZ
+; Γ ⊢ x : t
 ;
-; Γ, xE : in-tZ ⊢ bodyE : out-tZ
+; Γ, x : in-t ⊢ body : out-t
 ; ------
-; Γ ⊢ \xE. bodyE : in-tZ -> out-tZ
+; Γ ⊢ \x. body : in-t -> out-t
 ;
-; Γ ⊢ funE : in-tZ -> out-tZ
-; Γ ⊢ argE : in-tZ
+; Γ ⊢ fun : in-t -> out-t
+; Γ ⊢ arg : in-t
 ; ------
-; Γ ⊢ funE argE : out-tZ
+; Γ ⊢ fun arg : out-t
 ;
-; Γ, funE : in-tZ -> out-tZ, xE : in-tZ ⊢ defE : out-tZ
-; Γ, funE : in-tZ -> out-tZ ⊢ bodyE : tZ
+; Γ, fun : in-t -> out-t, x : in-t ⊢ def : out-t
+; Γ, fun : in-t -> out-t ⊢ body : t
 ; ------
-; Γ ⊢ let-fun funE xE = defE in bodyE : tZ
-;
-; ------
-; Γ ⊢ zeroE : Nat
+; Γ ⊢ let-fun fun x = def in body : t
 ;
 ; ------
-; Γ ⊢ succE : Nat -> Nat
+; Γ ⊢ zero : Nat
 ;
-; Γ ⊢ scrutE : Nat
-; Γ ⊢ zero-branchE : tZ
-; Γ, succ-xE : Nat ⊢ succ-branchE : tZ
 ; ------
-; Γ ⊢ case-natE scrutE of
-;       { zero -> zero-branchE
-;       ; succ succ-xE -> succ-branchE
-;       } : tZ
-(define (checkE gamma eeE ttZ)
-  (match eeE
-    [(mk-varE xE)
-     (unify ttZ (hash-ref gamma xE))]
-    [(mk-λE xE bodyE)
-     (define x-tZ (new-uf-set))
-     (define out-tZ (new-uf-set))
-     (and (checkE (hash-set gamma xE x-tZ)
-                  bodyE out-tZ)
-          (unify ttZ (ArrowZ x-tZ out-tZ)))]
-    [(mk-appE funE argE)
-     (define in-tZ (new-uf-set))
-     (define out-tZ ttZ)
-     (and (checkE gamma funE (ArrowZ in-tZ out-tZ))
-          (checkE gamma argE in-tZ)
-          ttZ)]
-    [(mk-let-funE funE maybe-tZ xE defE bodyE)
-     (define in-tZ (new-uf-set))
-     (define out-tZ (new-uf-set))
-     (and (when maybe-tZ
-            (unify maybe-tZ (ArrowZ in-tZ out-tZ)))
-          (checkE (hash-set* gamma
-                    funE (ArrowZ in-tZ out-tZ)
-                    xE in-tZ)
-                  defE out-tZ)
+; Γ ⊢ succ : Nat -> Nat
+;
+; Γ ⊢ scrut : Nat
+; Γ ⊢ zero-branch : t
+; Γ, succ-x : Nat ⊢ succ-branch : t
+; ------
+; Γ ⊢ case-nat scrut of
+;       { zero -> zero-branch
+;       ; succ succ-x -> succ-branch
+;       } : t
+(define (check gamma ee tt)
+  (match ee
+    [(mk-var x)
+     (unify tt (hash-ref gamma x))]
+    [(mk-λ x body)
+     (define x-t (new-uf-set))
+     (define out-t (new-uf-set))
+     (and (check (hash-set gamma x x-t)
+                  body out-t)
+          (unify tt (Arrow x-t out-t)))]
+    [(mk-app fun arg)
+     (define in-t (new-uf-set))
+     (define out-t tt)
+     (and (check gamma fun (Arrow in-t out-t))
+          (check gamma arg in-t)
+          tt)]
+    [(mk-let-fun fun maybe-t x def body)
+     (define in-t (new-uf-set))
+     (define out-t (new-uf-set))
+     (and (when maybe-t
+            (unify maybe-t (Arrow in-t out-t)))
+          (check (hash-set* gamma
+                    fun (Arrow in-t out-t)
+                    x in-t)
+                  def out-t)
           ; TODO: generalize
-          (checkE (hash-set gamma
-                    funE (ArrowZ in-tZ out-tZ))
-                  bodyE ttZ))]
-    [(mk-zeroE)
-     (unify ttZ (NatZ))]
-    [(mk-succE)
-     (unify ttZ (ArrowZ (NatZ) (NatZ)))]
-    [(mk-case-natE scrutE zero-branchE succ-xE succ-branchE)
-     (and (checkE gamma scrutE (NatZ))
-          (checkE gamma zero-branchE ttZ)
-          (checkE (hash-set gamma succ-xE (NatZ))
-                  succ-branchE ttZ))]))
-(define (inferE eeE)
-  (define ttZ (new-uf-set))
-  (and (checkE (hash) eeE ttZ)
-       (zonk ttZ)))
-; same basic examples with inferE
-(check-equal? (inferE (appE succE zeroE))
-              (NatZ))
-(check-equal? (inferE (appE zeroE succE))
+          (check (hash-set gamma
+                    fun (Arrow in-t out-t))
+                  body tt))]
+    [(mk-zero)
+     (unify tt (Nat))]
+    [(mk-succ)
+     (unify tt (Arrow (Nat) (Nat)))]
+    [(mk-case-nat scrut zero-branch succ-x succ-branch)
+     (and (check gamma scrut (Nat))
+          (check gamma zero-branch tt)
+          (check (hash-set gamma succ-x (Nat))
+                  succ-branch tt))]))
+(define (infer ee)
+  (define tt (new-uf-set))
+  (and (check (hash) ee tt)
+       (zonk tt)))
+; same basic examples with infer
+(check-equal? (infer (app succ zero))
+              (Nat))
+(check-equal? (infer (app zero succ))
               #f)
-(check-equal? (inferE (let-funE [(const-zero _) zeroE]
-                        (appE const-zero succE)))
-              (NatZ))
-(check-equal? (inferE (let-funE [(id x) x]
-                        (appE id zeroE)))
-              (NatZ))
+(check-equal? (infer (let-fun [(const-zero _) zero]
+                        (app const-zero succ)))
+              (Nat))
+(check-equal? (infer (let-fun [(id x) x]
+                        (app id zero)))
+              (Nat))
 ; TODO: uncomment once generalization is implemented
-;(check-equal? (inferE (let-funE "id" "x" (varE "x")
-;                        (appE
-;                          (appE (varE "id") (varE "id"))
-;                          (zeroE))))
-;              (NatZ))
-(check-equal? (inferE (let-funE [(add x y)
-                                 (case-natE x
-                                   [zeroE
+;(check-equal? (infer (let-fun "id" "x" (var "x")
+;                        (app
+;                          (app (var "id") (var "id"))
+;                          (zero))))
+;              (Nat))
+(check-equal? (infer (let-fun [(add x y)
+                                 (case-nat x
+                                   [zero
                                     y]
-                                   [(succE x-1)
-                                    (appE succE
-                                      (appE add x-1 y))])]
-                        (appE add (natE 2) (natE 2))))
-              (NatZ))
+                                   [(succ x-1)
+                                    (app succ
+                                      (app add x-1 y))])]
+                        (app add (nat 2) (nat 2))))
+              (Nat))
 
 
 ;;;;;;;;;;;;;;;
 ; interpreter ;
 ;;;;;;;;;;;;;;;
 
-; big-steps semantics for Macro-level phase 1 terms. note that
+; big-steps semantics for phase 1 terms. note that
 ;
-;   Δ; {Γ̅} ⊢ eU => eE
+;   Δ; {Γ̅} ⊢ e0 => e
 ;
-; is expansion, not evaluation, and that Γ̅ maps variables to Expanded phase 0
-; terms, not to phase 0 values.
+; is expansion, not evaluation, and that Γ̅ maps variables to expanded terms,
+; not to values.
 ;
-; xM ↦ vM ∈ Δ
+; x1 ↦ v1 ∈ Δ
 ; ------
-; {Δ}; Γ̅ ⊢ xM => vM
+; {Δ}; Γ̅ ⊢ x1 => v1
 ;
 ; ------
-; {Δ}; Γ̅ ⊢ \xM. bodyM => clo Δ Γ̅ xM bodyM
+; {Δ}; Γ̅ ⊢ \x1. body1 => clo Δ Γ̅ x1 body1
 ;
-; {Δ}; Γ̅ ⊢ funM => clo clo-Δ clo-Γ xM bodyM
-; {Δ}; Γ̅ ⊢ argM => inM
-; {clo-Δ, xM ↦ inM}; clo-Γ ⊢ bodyM => outM
+; {Δ}; Γ̅ ⊢ fun1 => clo clo-Δ clo-Γ x1 body1
+; {Δ}; Γ̅ ⊢ arg1 => in1
+; {clo-Δ, x1 ↦ in1}; clo-Γ ⊢ body1 => out1
 ; ------
-; {Δ}; Γ̅ ⊢ funM arg2M => outM
+; {Δ}; Γ̅ ⊢ fun1 arg2 => out1
 ;
-; ext-Δ@{Δ, funM ↦ clo ext-Δ Γ̅ xM defM}; Γ̅ ⊢ bodyM => vM
+; ext-Δ@{Δ, fun1 ↦ clo ext-Δ Γ̅ x1 def1}; Γ̅ ⊢ body1 => v1
 ; ------
-; {Δ}; Γ̅ ⊢ let-fun funM xM = defM in bodyM => vM
+; {Δ}; Γ̅ ⊢ let-fun fun1 x1 = def1 in body1 => v1
 ;
 ; ------
 ; {Δ}; Γ̅ ⊢ zero => zero
@@ -981,361 +980,361 @@
 ; ------
 ; {Δ}; Γ̅ ⊢ succ => succ
 ;
-; {Δ}; Γ̅ ⊢ funM => succ
-; {Δ}; Γ̅ ⊢ argM => nM
+; {Δ}; Γ̅ ⊢ fun1 => succ
+; {Δ}; Γ̅ ⊢ arg1 => n1
 ; ------
-; {Δ}; Γ̅ ⊢ funM arg2M => succ nM
+; {Δ}; Γ̅ ⊢ fun1 arg2 => succ n1
 ;
-; {Δ}; Γ̅ ⊢ scrutM => zero
-; {Δ}; Γ̅ ⊢ zero-branchM => vM
+; {Δ}; Γ̅ ⊢ scrut1 => zero
+; {Δ}; Γ̅ ⊢ zero-branch1 => v1
 ; ------
-; {Δ}; Γ̅ ⊢ case-nat scrutM of
-;            { zero -> zero-branchM
-;            ; succ succ-xM -> succ-branchM
+; {Δ}; Γ̅ ⊢ case-nat scrut1 of
+;            { zero -> zero-branch1
+;            ; succ succ-x1 -> succ-branch1
 ;            }
-;       => vM
+;       => v1
 ;
-; {Δ}; Γ̅ ⊢ scrutM => succ nM
-; {Δ, succ-xM ↦ nM}; Γ̅ ⊢ succ-branchM => vM
+; {Δ}; Γ̅ ⊢ scrut1 => succ n1
+; {Δ, succ-x1 ↦ n1}; Γ̅ ⊢ succ-branch1 => v1
 ; ------
-; {Δ}; Γ̅ ⊢ case-nat scrutM of
-;            { zero -> zero-branchM
-;            ; succ succ-xM -> succ-branchM
+; {Δ}; Γ̅ ⊢ case-nat scrut1 of
+;            { zero -> zero-branch1
+;            ; succ succ-x1 -> succ-branch1
 ;            }
-;       => vM
+;       => v1
 ;
-; Δ; {Γ̅} ⊢ lowerU => lowerE
+; Δ; {Γ̅} ⊢ lower0 => lower
 ; ------
-; {Δ}; Γ̅ ⊢ 'lowerU => 'lowerE
+; {Δ}; Γ̅ ⊢ 'lower0 => 'lower
 ;
-; {Δ}; Γ̅ ⊢ defM => 'lowerE
-; {Δ}; Γ, xU ↦ lowerE ⊢ bodyM => vM
+; {Δ}; Γ̅ ⊢ def1 => 'lower
+; {Δ}; Γ, x0 ↦ lower ⊢ body1 => v1
 ; ------
-; {Δ}; Γ̅̅ ⊢ let-diaM xU = defM in body
-(struct clo-valM (delta gamma-bar xM bodyM) #:transparent)
-(struct succ-valM () #:transparent)
-(struct nat-valM (n) #:transparent)
-(struct quoted-valM (exprE) #:transparent)
-(define (evalM delta gamma-bar eeM)
-  (match eeM
-    [(mk-varM xM)
-     ((hash-ref delta xM))]
-    [(mk-λM xM bodyM)
-     (clo-valM delta gamma-bar xM bodyM)]
-    [(mk-appM funM argM)
-     (match (evalM delta gamma-bar funM)
-       [(clo-valM clo-delta clo-gamma-bar xM bodyM)
-        (define inM (evalM delta gamma-bar argM))
-        (evalM (hash-set clo-delta xM (λ () inM)) clo-gamma-bar bodyM)]
-       [(succ-valM)
-        (match (evalM delta gamma-bar argM)
-          [(nat-valM inM)
-           (nat-valM (+ inM 1))])])]
-    [(mk-let-funM funM _maybe-tM xM defM bodyM)
+; {Δ}; Γ̅̅ ⊢ let-dia1 x0 = def1 in body
+(struct clo-val1 (delta gamma-bar x1 body1) #:transparent)
+(struct succ-val1 () #:transparent)
+(struct nat-val1 (n) #:transparent)
+(struct quoted-val1 (expr) #:transparent)
+(define (eval1 delta gamma-bar ee1)
+  (match ee1
+    [(mk-var1 x1)
+     ((hash-ref delta x1))]
+    [(mk-λ1 x1 body1)
+     (clo-val1 delta gamma-bar x1 body1)]
+    [(mk-app1 fun1 arg1)
+     (match (eval1 delta gamma-bar fun1)
+       [(clo-val1 clo-delta clo-gamma-bar x1 body1)
+        (define in1 (eval1 delta gamma-bar arg1))
+        (eval1 (hash-set clo-delta x1 (lambda () in1)) clo-gamma-bar body1)]
+       [(succ-val1)
+        (match (eval1 delta gamma-bar arg1)
+          [(nat-val1 in1)
+           (nat-val1 (+ in1 1))])])]
+    [(mk-let-fun1 fun1 _maybe-t1 x1 def1 body1)
      (define (mk-fun)
-       (clo-valM (hash-set delta funM mk-fun) gamma-bar xM defM))
-     (evalM (hash-set delta funM mk-fun) gamma-bar bodyM)]
-    [(mk-zeroM)
-     (nat-valM 0)]
-    [(mk-succM)
-     (succ-valM)]
-    [(mk-case-natM scrutM zero-branchM succ-xM succ-branchM)
-     (match (evalM delta gamma-bar scrutM)
-       [(nat-valM 0)
-        (evalM delta gamma-bar zero-branchM)]
-       [(nat-valM n)
-        (define x (nat-valM (- n 1)))
-        (evalM (hash-set delta succ-xM (λ () x)) gamma-bar succ-branchM)])]
-    [(mk-quoteM lowerU)
-     (quoted-valM (expandU delta gamma-bar lowerU))]
-    [(mk-let-diaM xU _maybe-tM defM bodyM)
-     (match (evalM delta gamma-bar defM)
-       [(quoted-valM lowerE)
-        (evalM delta (hash-set gamma-bar xU lowerE) bodyM)])]))
-(define (eval-closedM eeM)
-  (evalM (hash) (hash) eeM))
+       (clo-val1 (hash-set delta fun1 mk-fun) gamma-bar x1 def1))
+     (eval1 (hash-set delta fun1 mk-fun) gamma-bar body1)]
+    [(mk-zero1)
+     (nat-val1 0)]
+    [(mk-succ1)
+     (succ-val1)]
+    [(mk-case-nat1 scrut1 zero-branch1 succ-x1 succ-branch1)
+     (match (eval1 delta gamma-bar scrut1)
+       [(nat-val1 0)
+        (eval1 delta gamma-bar zero-branch1)]
+       [(nat-val1 n)
+        (define x (nat-val1 (- n 1)))
+        (eval1 (hash-set delta succ-x1 (lambda () x)) gamma-bar succ-branch1)])]
+    [(mk-quote1 lower0)
+     (quoted-val1 (expand0 delta gamma-bar lower0))]
+    [(mk-let-dia1 x0 _maybe-t1 def1 body1)
+     (match (eval1 delta gamma-bar def1)
+       [(quoted-val1 lower)
+        (eval1 delta (hash-set gamma-bar x0 lower) body1)])]))
+(define (eval-closed1 ee1)
+  (eval1 (hash) (hash) ee1))
 
-; big-steps semantics for expanding Unexpanded phase 0 terms
+; big-steps semantics for expanding unexpanded phase 0 terms
 ;
-; xU ↦ eE ∈ Γ̅̅
+; x0 ↦ e ∈ Γ̅̅
 ; ------
-; Δ; {Γ̅} ⊢ xU => eE
+; Δ; {Γ̅} ⊢ x0 => e
 ;
-; Δ; {Γ̅, xU ↦ xE} ⊢ bodyU => bodyE
+; Δ; {Γ̅, x0 ↦ x} ⊢ body0 => body
 ; ------
-; Δ; {Γ̅} ⊢ \xU. bodyU => \xE. bodyE
+; Δ; {Γ̅} ⊢ \x0. body0 => \x. body
 ;
-; Δ; {Γ̅} ⊢ funU => funE
-; Δ; {Γ̅} ⊢ argU => argE
+; Δ; {Γ̅} ⊢ fun0 => fun
+; Δ; {Γ̅} ⊢ arg0 => arg
 ; ------
-; Δ; {Γ̅} ⊢ funU argU => funE argE
+; Δ; {Γ̅} ⊢ fun0 arg0 => fun arg
 ;
-; Δ; {Γ̅, funU ↦ funE, xU ↦ xE} ⊢ defU => defE
-; Δ; {Γ̅, funU ↦ funE} ⊢ bodyU => bodyE
+; Δ; {Γ̅, fun0 ↦ fun, x0 ↦ x} ⊢ def0 => def
+; Δ; {Γ̅, fun0 ↦ fun} ⊢ body0 => body
 ; ------
-; Δ; {Γ̅} ⊢ let-fun funU xU = defU in bodyU
-;       => let-fun funE xE = defE in bodyE
-;
-; ------
-; Δ; {Γ̅} ⊢ zeroU => zeroE
+; Δ; {Γ̅} ⊢ let-fun fun0 x0 = def0 in body0
+;       => let-fun fun x = def in body
 ;
 ; ------
-; Δ; {Γ̅} ⊢ succU => succE
+; Δ; {Γ̅} ⊢ zero0 => zero
 ;
-; Δ; {Γ̅} ⊢ scrutU => scrutE
-; Δ; {Γ̅} ⊢ zero-branchU => zero-branchE
-; Δ; {Γ̅, succ-xU ↦ succ-xE} ⊢ succ-branchU => succ-branchE
 ; ------
-; Δ; {Γ̅} ⊢ case-natU scrutU of
-;            { zero -> zero-branchU
-;            ; succ succ-xU -> succ-branchU
+; Δ; {Γ̅} ⊢ succ0 => succ
+;
+; Δ; {Γ̅} ⊢ scrut0 => scrut
+; Δ; {Γ̅} ⊢ zero-branch0 => zero-branch
+; Δ; {Γ̅, succ-x0 ↦ succ-x} ⊢ succ-branch0 => succ-branch
+; ------
+; Δ; {Γ̅} ⊢ case-nat0 scrut0 of
+;            { zero -> zero-branch0
+;            ; succ succ-x0 -> succ-branch0
 ;            }
-;       => case-natE scrutE of
-;           { zero -> zero-branchE
-;           ; succ succ-xE -> succ-branchE
+;       => case-nat scrut of
+;           { zero -> zero-branch
+;           ; succ succ-x -> succ-branch
 ;           }
 ;
-; {Δ}; Γ̅ ⊢ higherM => 'lowerE
+; {Δ}; Γ̅ ⊢ higher1 => 'lower
 ; ------
-; Δ; {Γ̅} ⊢ $higherM => lowerE
+; Δ; {Γ̅} ⊢ $higher1 => lower
 ;
-; {Δ}; Γ̅ ⊢ defM => vM
-; Δ, xU ↦ vM; {Γ̅} ⊢ bodyU => bodyE
+; {Δ}; Γ̅ ⊢ def1 => v1
+; Δ, x0 ↦ v1; {Γ̅} ⊢ body0 => body
 ; ------
-; Δ; {Γ̅} ⊢ let-macroM xU = defM in bodyU => bodyE
-(define (expandU delta gamma-bar eeU)
-  (match eeU
-    [(mk-varU xU)
-     (hash-ref gamma-bar xU)]
-    [(mk-λU xU bodyU)
-     (define bodyE (expandU delta (hash-set gamma-bar
-                                    xU (mk-varE xU))
-                            bodyU))
-     (mk-λE xU bodyE)]
-    [(mk-appU funU argU)
-     (define funE (expandU delta gamma-bar funU))
-     (define argE (expandU delta gamma-bar argU))
-     (mk-appE funE argE)]
-    [(mk-let-funU funU maybe-tZ xU defU bodyU)
-     (define defE (expandU delta (hash-set* gamma-bar
-                                   funU (mk-varE funU)
-                                   xU (mk-varE xU))
-                           defU))
-     (define bodyE (expandU delta (hash-set gamma-bar
-                                    funU (mk-varE funU))
-                            bodyU))
-     (mk-let-funE funU maybe-tZ xU defE bodyE)]
-    [(mk-zeroU)
-     (mk-zeroE)]
-    [(mk-succU)
-     (mk-succE)]
-    [(mk-case-natU scrutU zero-branchU succ-xU succ-branchU)
-     (define scrutE (expandU delta gamma-bar scrutU))
-     (define zero-branchE (expandU delta gamma-bar zero-branchU))
-     (define succ-branchE (expandU delta (hash-set gamma-bar
-                                           succ-xU (mk-varE succ-xU))
-                                   succ-branchU))
-     (mk-case-natE scrutE zero-branchE succ-xU succ-branchE)]
-    [(mk-spliceU higherM)
-     (match (evalM delta gamma-bar higherM)
-       [(quoted-valM lowerE)
-        lowerE])]
-    [(mk-let-macroU xU _maybe-tM defM bodyU)
-     (define vM (evalM delta gamma-bar defM))
-     (expandU (hash-set delta xU (λ () vM)) gamma-bar
-              bodyU)]))
-(define (expand-closedU eeU)
-  (expandU (hash) (hash) eeU))
-; the usual basic examples, with evalM
-(check-equal? (eval-closedM (appM succM zeroM))
-              (nat-valM 1))
+; Δ; {Γ̅} ⊢ let-macro1 x0 = def1 in body0 => body
+(define (expand0 delta gamma-bar ee0)
+  (match ee0
+    [(mk-var0 x0)
+     (hash-ref gamma-bar x0)]
+    [(mk-λ0 x0 body0)
+     (define body (expand0 delta (hash-set gamma-bar
+                                    x0 (mk-var x0))
+                            body0))
+     (mk-λ x0 body)]
+    [(mk-app0 fun0 arg0)
+     (define fun (expand0 delta gamma-bar fun0))
+     (define arg (expand0 delta gamma-bar arg0))
+     (mk-app fun arg)]
+    [(mk-let-fun0 fun0 maybe-t x0 def0 body0)
+     (define def (expand0 delta (hash-set* gamma-bar
+                                   fun0 (mk-var fun0)
+                                   x0 (mk-var x0))
+                           def0))
+     (define body (expand0 delta (hash-set gamma-bar
+                                    fun0 (mk-var fun0))
+                            body0))
+     (mk-let-fun fun0 maybe-t x0 def body)]
+    [(mk-zero0)
+     (mk-zero)]
+    [(mk-succ0)
+     (mk-succ)]
+    [(mk-case-nat0 scrut0 zero-branch0 succ-x0 succ-branch0)
+     (define scrut (expand0 delta gamma-bar scrut0))
+     (define zero-branch (expand0 delta gamma-bar zero-branch0))
+     (define succ-branch (expand0 delta (hash-set gamma-bar
+                                           succ-x0 (mk-var succ-x0))
+                                   succ-branch0))
+     (mk-case-nat scrut zero-branch succ-x0 succ-branch)]
+    [(mk-splice0 higher1)
+     (match (eval1 delta gamma-bar higher1)
+       [(quoted-val1 lower)
+        lower])]
+    [(mk-let-macro0 x0 _maybe-t1 def1 body0)
+     (define v1 (eval1 delta gamma-bar def1))
+     (expand0 (hash-set delta x0 (lambda () v1)) gamma-bar
+              body0)]))
+(define (expand-closed0 ee0)
+  (expand0 (hash) (hash) ee0))
+; the usual basic examples, with eval1
+(check-equal? (eval-closed1 (app1 succ1 zero1))
+              (nat-val1 1))
 ; TODO: throw and catch runtime errors
-;(check-equal? (eval-closedM (appM zeroM succM))
+;(check-equal? (eval-closed1 (app1 zero1 succ1))
 ;              #f)
-(check-equal? (eval-closedM (let-funM [(const-zero _) zeroM]
-                              (appM const-zero succM)))
-              (nat-valM 0))
-(check-equal? (eval-closedM (let-funM [(id x) x]
-                              (appM id zeroM)))
-              (nat-valM 0))
-(check-equal? (eval-closedM (let-funM [(id x) x]
-                              (appM id id zeroM)))
-              (nat-valM 0))
-(check-equal? (eval-closedM (let-funM [(add x y)
-                                       (case-natM x
-                                         [zeroM
+(check-equal? (eval-closed1 (let-fun1 [(const-zero _) zero1]
+                              (app1 const-zero succ1)))
+              (nat-val1 0))
+(check-equal? (eval-closed1 (let-fun1 [(id x) x]
+                              (app1 id zero1)))
+              (nat-val1 0))
+(check-equal? (eval-closed1 (let-fun1 [(id x) x]
+                              (app1 id id zero1)))
+              (nat-val1 0))
+(check-equal? (eval-closed1 (let-fun1 [(add x y)
+                                       (case-nat1 x
+                                         [zero1
                                           y]
-                                         [(succM x-1)
-                                          (appM succM
-                                            (appM add x-1 y))])]
-                              (appM add (natM 2) (natM 2))))
-              (nat-valM 4))
-;; more interesting examples with let-diaM, quoteM, let-macroU, and spliceU:
-(check-equal? (eval-closedM (let-diaM [two (quoteM (natU 2))]
-                              (quoteM (appU succU
-                                        (appU succU
+                                         [(succ1 x-1)
+                                          (app1 succ1
+                                            (app1 add x-1 y))])]
+                              (app1 add (nat1 2) (nat1 2))))
+              (nat-val1 4))
+; more interesting examples with let-dia1, quote1, let-macro0, and splice0:
+(check-equal? (eval-closed1 (let-dia1 [two (quote1 (nat0 2))]
+                              (quote1 (app0 succ0
+                                        (app0 succ0
                                           two)))))
-              (quoted-valM (natE 4)))
-(check-equal? (expand-closedU (let-funU [(add x y)
-                                         (case-natU x
-                                           [zeroU
+              (quoted-val1 (nat 4)))
+(check-equal? (expand-closed0 (let-fun0 [(add x y)
+                                         (case-nat0 x
+                                           [zero0
                                             y]
-                                           [(succU x-1)
-                                            (appU succU
-                                              (appU add x-1 y))])]
-                                (let-funU [(mul x y)
-                                           (case-natU x
-                                             [zeroU
-                                              zeroU]
-                                             [(succU x-1)
-                                              (appU add
+                                           [(succ0 x-1)
+                                            (app0 succ0
+                                              (app0 add x-1 y))])]
+                                (let-fun0 [(mul x y)
+                                           (case-nat0 x
+                                             [zero0
+                                              zero0]
+                                             [(succ0 x-1)
+                                              (app0 add
                                                 y
-                                                (appU mul x-1 y))])]
-                                  (let-macroU [(power n diaX)
-                                               (let-diaM [x diaX]
-                                                 (let-funM [(go n-1)
-                                                            (case-natM n-1
-                                                              [zeroM
-                                                               (quoteM x)]
-                                                              [(succM n-2)
-                                                               (let-diaM [recur
-                                                                          (appM go n-2)]
-                                                                 (quoteM
-                                                                   (appU mul x recur)))])]
-                                                   (case-natM n
-                                                     [zeroM
-                                                      (quoteM (natU 1))]
-                                                     [(succM n-1)
-                                                      (appM go n-1)])))]
-                                    (let-funU [(square x)
-                                               (spliceU (appM power
-                                                              (natM 2)
-                                                              (quoteM x)))]
-                                      (appU square (appU square (natU 2))))))))
-              (let-funE [(add x) (λE (y)
-                                   (case-natE x
-                                     [zeroE
+                                                (app0 mul x-1 y))])]
+                                  (let-macro0 [(power n diaX)
+                                               (let-dia1 [x diaX]
+                                                 (let-fun1 [(go n-1)
+                                                            (case-nat1 n-1
+                                                              [zero1
+                                                               (quote1 x)]
+                                                              [(succ1 n-2)
+                                                               (let-dia1 [recur
+                                                                          (app1 go n-2)]
+                                                                 (quote1
+                                                                   (app0 mul x recur)))])]
+                                                   (case-nat1 n
+                                                     [zero1
+                                                      (quote1 (nat0 1))]
+                                                     [(succ1 n-1)
+                                                      (app1 go n-1)])))]
+                                    (let-fun0 [(square x)
+                                               (splice0 (app1 power
+                                                              (nat1 2)
+                                                              (quote1 x)))]
+                                      (app0 square (app0 square (nat0 2))))))))
+              (let-fun [(add x) (λ (y)
+                                   (case-nat x
+                                     [zero
                                       y]
-                                     [(succE x-1)
-                                      (appE succE
-                                        (appE add x-1 y))]))]
-                (let-funE [(mul x) (λE (y)
-                                     (case-natE x
-                                       [zeroE
-                                        zeroE]
-                                       [(succE x-1)
-                                        (appE add
+                                     [(succ x-1)
+                                      (app succ
+                                        (app add x-1 y))]))]
+                (let-fun [(mul x) (λ (y)
+                                     (case-nat x
+                                       [zero
+                                        zero]
+                                       [(succ x-1)
+                                        (app add
                                           y
-                                          (appE mul x-1 y))]))]
-                  (let-funE [(square x)
-                             (appE mul x x)]
-                    (appE square
-                      (appE square
-                        (natE 2)))))))
+                                          (app mul x-1 y))]))]
+                  (let-fun [(square x)
+                             (app mul x x)]
+                    (app square
+                      (app square
+                        (nat 2)))))))
 
-; big steps semantics for Expanded phase 0 terms
+; big steps semantics for expanded phase 0 terms
 ;
-; xE ↦ vE ∈ Γ
+; x ↦ v ∈ Γ
 ; ------
-; Γ ⊢ xE => vE
-;
-; ------
-; Γ ⊢ \xE. bodyE => clo Γ xE bodyE
-;
-; Γ ⊢ funE => clo clo-Γ xE defE
-; Γ ⊢ argE => inE
-; clo-Γ, xE ↦ inE ⊢ bodyE => outE
-; ------
-; Γ ⊢ funE argE => outE
-;
-; ext-Γ@(Γ, funE ↦ clo ext-Γ xE defE); Γ ⊢ bodyE => vE
-; ------
-; Γ ⊢ let-fun funE xE = defE in bodyE => vE
+; Γ ⊢ x => v
 ;
 ; ------
-; Γ ⊢ zeroE => zero
+; Γ ⊢ \x. body => clo Γ x body
+;
+; Γ ⊢ fun => clo clo-Γ x def
+; Γ ⊢ arg => in
+; clo-Γ, x ↦ in ⊢ body => out
+; ------
+; Γ ⊢ fun arg => out
+;
+; ext-Γ@(Γ, fun ↦ clo ext-Γ x def); Γ ⊢ body => v
+; ------
+; Γ ⊢ let-fun fun x = def in body => v
 ;
 ; ------
-; Γ ⊢ succE => succ
+; Γ ⊢ zero => zero
 ;
-; Γ ⊢ funE => succ
-; Γ ⊢ argE => nE
 ; ------
-; Γ ⊢ funE argE => succ nE
+; Γ ⊢ succ => succ
 ;
-; Γ ⊢ scrutE => zero
-; Γ ⊢ zero-branchE => vE
+; Γ ⊢ fun => succ
+; Γ ⊢ arg => n
 ; ------
-; Γ ⊢ case-nat scrutE of
-;       { zero -> zero-branchE
-;       ; succ succ-xE -> succ-branchE
+; Γ ⊢ fun arg => succ n
+;
+; Γ ⊢ scrut => zero
+; Γ ⊢ zero-branch => v
+; ------
+; Γ ⊢ case-nat scrut of
+;       { zero -> zero-branch
+;       ; succ succ-x -> succ-branch
 ;       }
-;     => vE
+;     => v
 ;
-; Γ ⊢ scrutE => succ nE
-; Γ, succ-xE ↦ nE ⊢ succ-branchE => vE
+; Γ ⊢ scrut => succ n
+; Γ, succ-x ↦ n ⊢ succ-branch => v
 ; ------
-; Γ ⊢ case-nat scrutE of
-;       { zero -> zero-branchE
-;       ; succ succ-xE -> succ-branchE
+; Γ ⊢ case-nat scrut of
+;       { zero -> zero-branch
+;       ; succ succ-x -> succ-branch
 ;       }
-;  => vE
-(struct clo-valE (gamma xE bodyE) #:transparent)
-(struct succ-valE () #:transparent)
-(struct nat-valE (nE) #:transparent)
-(define (evalE gamma eeE)
-  (match eeE
-    [(mk-varE xE)
-     ((hash-ref gamma xE))]
-    [(mk-λE xE bodyE)
-     (clo-valE gamma xE bodyE)]
-    [(mk-appE funE argE)
-     (match (evalE gamma funE)
-       [(clo-valE clo-gamma xE bodyE)
-        (define inE (evalE gamma argE))
-        (evalE (hash-set clo-gamma xE (λ () inE)) bodyE)]
-       [(succ-valE)
-        (match (evalE gamma argE)
-          [(nat-valE nE)
-           (nat-valE (+ nE 1))])])]
-    [(mk-let-funE funE _maybe-tZ xE defE bodyE)
+;  => v
+(struct clo-val (gamma x body) #:transparent)
+(struct succ-val () #:transparent)
+(struct nat-val (n) #:transparent)
+(define (eval gamma ee)
+  (match ee
+    [(mk-var x)
+     ((hash-ref gamma x))]
+    [(mk-λ x body)
+     (clo-val gamma x body)]
+    [(mk-app fun arg)
+     (match (eval gamma fun)
+       [(clo-val clo-gamma x body)
+        (define in (eval gamma arg))
+        (eval (hash-set clo-gamma x (lambda () in)) body)]
+       [(succ-val)
+        (match (eval gamma arg)
+          [(nat-val n)
+           (nat-val (+ n 1))])])]
+    [(mk-let-fun fun _maybe-t x def body)
      (define (mk-fun)
-       (clo-valE (hash-set gamma funE mk-fun) xE defE))
-     (evalE (hash-set gamma funE mk-fun) bodyE)]
-    [(mk-zeroE)
-     (nat-valE 0)]
-    [(mk-succE)
-     (succ-valE)]
-    [(mk-case-natE scrutE zero-branchE succ-xE succ-branchE)
-     (match (evalE gamma scrutE)
-       [(nat-valE 0)
-        (evalE gamma zero-branchE)]
-       [(nat-valE nE)
-        (define x (nat-valE (- nE 1)))
-        (evalE (hash-set gamma succ-xE (λ () x)) succ-branchE)])]))
-(define (eval-closedE eeE)
-  (evalE (hash) eeE))
-; the usual basic examples, with evalE
-(check-equal? (eval-closedE (appE succE zeroE))
-              (nat-valE 1))
+       (clo-val (hash-set gamma fun mk-fun) x def))
+     (eval (hash-set gamma fun mk-fun) body)]
+    [(mk-zero)
+     (nat-val 0)]
+    [(mk-succ)
+     (succ-val)]
+    [(mk-case-nat scrut zero-branch succ-x succ-branch)
+     (match (eval gamma scrut)
+       [(nat-val 0)
+        (eval gamma zero-branch)]
+       [(nat-val n)
+        (define x (nat-val (- n 1)))
+        (eval (hash-set gamma succ-x (lambda () x)) succ-branch)])]))
+(define (eval-closed ee)
+  (eval (hash) ee))
+; the usual basic examples, with eval
+(check-equal? (eval-closed (app succ zero))
+              (nat-val 1))
 ; TODO: throw and catch runtime errors
-;(check-equal? (eval-closedE (appE zeroE succE))
+;(check-equal? (eval-closed (app zero succ))
 ;              #f)
-(check-equal? (eval-closedE (let-funE [(const-zero _) zeroE]
-                              (appE const-zero succE)))
-              (nat-valE 0))
-(check-equal? (eval-closedE (let-funE [(id x) x]
-                              (appE id zeroE)))
-              (nat-valE 0))
-(check-equal? (eval-closedE (let-funE [(id x) x]
-                              (appE id id zeroE)))
-              (nat-valE 0))
-(check-equal? (eval-closedE (let-funE [(add x y)
-                                       (case-natE x
-                                         [zeroE
+(check-equal? (eval-closed (let-fun [(const-zero _) zero]
+                              (app const-zero succ)))
+              (nat-val 0))
+(check-equal? (eval-closed (let-fun [(id x) x]
+                              (app id zero)))
+              (nat-val 0))
+(check-equal? (eval-closed (let-fun [(id x) x]
+                              (app id id zero)))
+              (nat-val 0))
+(check-equal? (eval-closed (let-fun [(add x y)
+                                       (case-nat x
+                                         [zero
                                           y]
-                                         [(succE x-1)
-                                          (appE succE
-                                            (appE add x-1 y))])]
-                              (appE add (natE 2) (natE 2))))
-              (nat-valE 4))
+                                         [(succ x-1)
+                                          (app succ
+                                            (app add x-1 y))])]
+                              (app add (nat 2) (nat 2))))
+              (nat-val 4))
