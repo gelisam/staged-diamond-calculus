@@ -55,19 +55,7 @@
 
 ; basic syntax sugar for phase 1 terms
 
-(define-syntax-rule (λ1-mono x body)
-  (mk-λ1 'x
-    (let ([x (mk-var1 'x)])
-      body)))
-(check-equal? (λ1-mono x1 x1)
-              (mk-λ1 'x1 (mk-var1 'x1)))
-
-(define-syntax (λ1 stx)
-  (syntax-case stx ()
-    [(_ () body1)
-     #'body1]
-    [(_ (x xs ...) body1)
-     #'(λ1-mono x (λ1 (xs ...) body1))]))
+(define-lambda-syntax λ1 mk-λ1 mk-var1)
 (check-equal? (λ1 (x1 y1) x1)
               (mk-λ1 'x1
                 (mk-λ1 'y1
@@ -134,19 +122,7 @@
 
 ; basic syntax sugar for unexpanded phase 0 terms
 
-(define-syntax-rule (λ0-mono x body)
-  (mk-λ0 'x
-    (let ([x (mk-var0 'x)])
-      body)))
-(check-equal? (λ0-mono x0 x0)
-              (mk-λ0 'x0 (mk-var0 'x0)))
-
-(define-syntax (λ0 stx)
-  (syntax-case stx ()
-    [(_ () body0)
-     #'body0]
-    [(_ (x xs ...) body0)
-     #'(λ0-mono x (λ0 (xs ...) body0))]))
+(define-lambda-syntax λ0 mk-λ0 mk-var0)
 (check-equal? (λ0 (x0 y0) x0)
               (mk-λ0 'x0
                 (mk-λ0 'y0
@@ -213,19 +189,7 @@
 
 ; basic syntax sugar for expanded terms
 
-(define-syntax-rule (λ-mono x body)
-  (mk-λ 'x
-    (let ([x (mk-var 'x)])
-      body)))
-(check-equal? (λ-mono x x)
-              (mk-λ 'x (mk-var 'x)))
-
-(define-syntax (λ stx)
-  (syntax-case stx ()
-    [(_ () body)
-     #'body]
-    [(_ (x xs ...) body)
-     #'(λ-mono x (λ (xs ...) body))]))
+(define-lambda-syntax λ mk-λ mk-var)
 (check-equal? (λ (x y) x)
               (mk-λ 'x
                 (mk-λ 'y
