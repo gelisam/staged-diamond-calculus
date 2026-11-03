@@ -61,12 +61,7 @@
                 (mk-λ1 'y1
                   (mk-var1 'x1))))
 
-(define-syntax (app1 stx)
-  (syntax-case stx ()
-    [(_ fun1 arg1)
-     #'(mk-app1 fun1 arg1)]
-    [(_ fun1 arg1s ... arg1)
-     #'(mk-app1 (app1 fun1 arg1s ...) arg1)]))
+(define-application-syntax app1 mk-app1)
 (check-equal? (app1 (mk-var1 'f) (mk-var1 'x) (mk-var1 'y) (mk-var1 'z))
               (mk-app1
                 (mk-app1
@@ -128,12 +123,7 @@
                 (mk-λ0 'y0
                   (mk-var0 'x0))))
 
-(define-syntax (app0 stx)
-  (syntax-case stx ()
-    [(_ fun0 arg0)
-     #'(mk-app0 fun0 arg0)]
-    [(_ fun0 arg0s ... arg0)
-     #'(mk-app0 (app0 fun0 arg0s ...) arg0)]))
+(define-application-syntax app0 mk-app0)
 (check-equal? (app0 (mk-var0 'f) (mk-var0 'x) (mk-var0 'y) (mk-var0 'z))
               (mk-app0
                 (mk-app0
@@ -195,12 +185,7 @@
                 (mk-λ 'y
                   (mk-var 'x))))
 
-(define-syntax (app stx)
-  (syntax-case stx ()
-    [(_ fun arg)
-     #'(mk-app fun arg)]
-    [(_ fun args ... arg)
-     #'(mk-app (app fun args ...) arg)]))
+(define-application-syntax app mk-app)
 (check-equal? (app (mk-var 'f) (mk-var 'x) (mk-var 'y) (mk-var 'z))
               (mk-app
                 (mk-app

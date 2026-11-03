@@ -6,7 +6,7 @@
 (provide
   and-let*
   my-struct my-struct*
-  define-lambda-syntax)
+  define-lambda-syntax define-application-syntax)
 
 ; (and-let* ([x e1] [y e2])
 ;   (+ x y))
@@ -149,3 +149,25 @@
          #'body]
         [(_ (x xs (... ...)) body)
          #'(lam-mono x (lam (xs (... ...)) body))]))))
+
+; (define-application-syntax app mk-app)
+; (app f x y z)
+; =>
+; (mk-app
+;   (mk-app
+;     (mk-app
+;       (mk-var 'f)
+;       (mk-var 'x))
+;     (mk-var 'y))
+;   (mk-var 'z))
+(define-syntax-rule (define-application-syntax app mk-app)
+  (define-syntax (app stx)
+    (syntax-case stx ()
+      [(_ fun arg)
+      #'(mk-app
+          fun
+          arg)]
+      [(_ fun arg (... ...) last-arg)
+      #'(mk-app
+          (app fun arg (... ...))
+          last-arg)])))
