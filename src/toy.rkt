@@ -14,56 +14,39 @@
 ; e1 ::= x1 | \x1. e1 | e1 e1
 ;      | zero | succ | case-nat e1 of {zero -> e1; succ x1 -> e1}
 ;      | 'e0 | let-dia1 x0 = e1 in e1
-(my-struct*
-  (mk-var1 x1)
-  (mk-λ1 (x1) e1)
-  (mk-app1 e1 e1)
-  (mk-let-fun1 [(e1 t1? x1) e1] e1)
-  (mk-zero1)
-  (mk-succ1)
-  (mk-case-nat1 e1 [#|zero|# e1] [(#|succ|# x1) e1])
-  (mk-quote1 e0)
-  (mk-let-dia1 [x0 t1? e1] e1))
-
+;
 ; Unexpanded phase 0 terms with phase 1 terms inside of them
 ; e0 ::= x0 | \x0. e0 | e0 e0
 ;      | zero | succ | case-nat e0 of {zero -> e0; succ x0 -> e0}
 ;      | $e1 | let-macro0 x1 = e1 in e0
-(my-struct*
-  (mk-var0 x0)
-  (mk-λ0 (x0) e0)
-  (mk-app0 e0 e0)
-  (mk-let-fun0 [(e0 t? x0) e0] e0)
-  (mk-zero0)
-  (mk-succ0)
-  (mk-case-nat0 e0 [#|zero|# e0] [(#|succ|# x0) e0])
-  (mk-splice0 e1)
-  (mk-let-macro0 [x1 t1? e1] e0))
-
+;
 ; Expanded phase 0 terms, with no phase 1 terms
 ; e ::= x | \x. e | e e
 ;      | zero | succ | case-nat e of {zero -> e; succ x -> e}
 (my-struct*
-  (mk-var x)
-  (mk-λ (x) e)
-  (mk-app e e)
-  (mk-let-fun [(e t? x) e] e)
-  (mk-zero)
-  (mk-succ)
-  (mk-case-nat e [#|zero|# e] [(#|succ|# x) e]))
+  (with-suffixes (1 0 "")
+    (mk-var x)
+    (mk-λ (x) e)
+    (mk-app e e)
+    (mk-let-fun [(e t? x) e] e)
+    (mk-zero)
+    (mk-succ)
+    (mk-case-nat e [#|zero|# e] [(#|succ|# x) e]))
+  (mk-quote1 e0)
+  (mk-let-dia1 [x0 t1? e1] e1)
+  (mk-splice0 e1)
+  (mk-let-macro0 [x1 t1? e1] e0))
 
 ; phase 1 types with phase 0 types inside of them
 ; t1 ::= t1 -> t1 | Nat1 | Dia t
-(my-struct*
-  (Arrow1 t1 t1)
-  (Nat1)
-  (Dia1 t))
-
+;
 ; phase 0 types with no phase 1 types
 ; t ::= t -> t | Nat
 (my-struct*
-  (Arrow t t)
-  (Nat))
+  (with-suffixes (1 "")
+    (Arrow t t)
+    (Nat))
+  (Dia1 t))
 
 
 ;;;;;;;;;;;;;;;;;;;
