@@ -48,28 +48,39 @@
     (Nat))
   (Dia1 t))
 
+; at this point lambda terms are very verbose.
+; (λ f x y. f y x) looks like this:
+(define church-two
+  (mk-λ 'f
+    (mk-λ 'x
+      (mk-λ 'y
+        (mk-app
+          (mk-app
+            (mk-var 'f)
+            (mk-var 'y))
+          (mk-var 'x))))))
+
 
 ;;;;;;;;;;;;;;;;;;;
 ; syntactic sugar ;
 ;;;;;;;;;;;;;;;;;;;
 
-; basic syntax sugar for phase 1 terms
+; syntax sugar for lambda abstraction and function application
 
 (define-lambda-syntax λ1 mk-λ1 mk-var1)
-(check-equal? (λ1 (x1 y1) x1)
-              (mk-λ1 'x1
-                (mk-λ1 'y1
-                  (mk-var1 'x1))))
+(define-lambda-syntax λ0 mk-λ0 mk-var0)
+(define-lambda-syntax λ mk-λ mk-var)
 
 (define-application-syntax app1 mk-app1)
-(check-equal? (app1 (mk-var1 'f) (mk-var1 'x) (mk-var1 'y) (mk-var1 'z))
-              (mk-app1
-                (mk-app1
-                  (mk-app1
-                    (mk-var1 'f)
-                    (mk-var1 'x))
-                  (mk-var1 'y))
-                (mk-var1 'z)))
+(define-application-syntax app0 mk-app0)
+(define-application-syntax app mk-app)
+
+; (λ f x y. f y x) now looks like this:
+(check-equal?
+  (λ (f x y) (app f y x))
+  church-two)
+
+; more syntax sugar for phase 1 terms
 
 (define-syntax (let-fun1 stx)
   (syntax-case stx ()
@@ -115,23 +126,7 @@
                 (mk-zero1)
                 'x1 (mk-app1 (mk-succ1) (mk-var1 'x1))))
 
-; basic syntax sugar for unexpanded phase 0 terms
-
-(define-lambda-syntax λ0 mk-λ0 mk-var0)
-(check-equal? (λ0 (x0 y0) x0)
-              (mk-λ0 'x0
-                (mk-λ0 'y0
-                  (mk-var0 'x0))))
-
-(define-application-syntax app0 mk-app0)
-(check-equal? (app0 (mk-var0 'f) (mk-var0 'x) (mk-var0 'y) (mk-var0 'z))
-              (mk-app0
-                (mk-app0
-                  (mk-app0
-                    (mk-var0 'f)
-                    (mk-var0 'x))
-                  (mk-var0 'y))
-                (mk-var0 'z)))
+; more syntax sugar for unexpanded phase 0 terms
 
 (define-syntax (let-fun0 stx)
   (syntax-case stx ()
@@ -177,23 +172,7 @@
                 (mk-zero0)
                 'x0 (mk-app0 (mk-succ0) (mk-var0 'x0))))
 
-; basic syntax sugar for expanded terms
-
-(define-lambda-syntax λ mk-λ mk-var)
-(check-equal? (λ (x y) x)
-              (mk-λ 'x
-                (mk-λ 'y
-                  (mk-var 'x))))
-
-(define-application-syntax app mk-app)
-(check-equal? (app (mk-var 'f) (mk-var 'x) (mk-var 'y) (mk-var 'z))
-              (mk-app
-                (mk-app
-                  (mk-app
-                    (mk-var 'f)
-                    (mk-var 'x))
-                  (mk-var 'y))
-                (mk-var 'z)))
+; more syntax sugar for expanded terms
 
 (define-syntax (let-fun stx)
   (syntax-case stx ()
